@@ -180,12 +180,19 @@ Sincronizar Gradle y ejecutar en el dispositivo/emulador.
     │   │   │   ├── loginModels.kt
     │   │   │   └── SettingsManager.kt      # Preferencias de Usuario
     │   │   │
-    │   │   ├──
-    │   │   ├──
-    │   │   ├──
-    │   │   ├──
-    │   │   ├──
-        │   │   ├──
+    │   │   ├── EvacuationScreen.kt    # Mapa de Rutas (Osmdroid)
+    │   │   ├── HomeScreen.kt          # Menú Principal y Botón de Pánico
+    │   │   ├── LoginScreen.kt         # Autenticación
+    │   │   ├── MyAlertsScreen.kt      # Historial de Pánico (Timeline)
+    │   │   ├── MyReportsScreen.kt     # Historial de Reportes
+    │   │   ├── NewsListContent.kt     # Listas de Noticias/Protocolos
+        │   ├── NoticiaDetailScreen.kt # Vista de Detalle (HTML Render)
+        │   ├── ProfileScreen.kt       # Menú de Perfil
+        │   ├── ReportScreen.kt        # Formulario de Incidentes (GPS/Cámara)
+        │   ├── SettingsScreen.kt      # Configuración de Notificaciones
+        │   ├── SupportScreen.kt       # Pantalla de Soporte
+        │   └── UserProfileScreen.kt   # Edición de Perfil y Foto
+
       ui/                   # Screens: Login, Home, Report, Mapas, etc
     ├── data/                 # Modelos, RetrofitClient, Config, etc
     └── utils/                # NetworkUtils, VibrationUtils, LocationService
