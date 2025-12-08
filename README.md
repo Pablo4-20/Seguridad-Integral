@@ -119,18 +119,75 @@ Sincronizar Gradle y ejecutar en el dispositivo/emulador.
 ```bash
 /
 ├── mi-backend/           # API Laravel (Lógica y BD)
-│   ├── app/Http/Controllers  # AdminController, IncidenteController, PanicoController
-│   ├── database/migrations   # Tablas: users, incidentes, alertas, noticias
-│   └── routes/api.php        # Rutas protegidas por Sanctum
+│   ├── app/
+│   │   ├── Http/Controllers/Api/   # Controladores lógicos
+│   │   │   ├── AuthController.php      # Login y gestión de tokens
+│   │   │   ├── AdminController.php     # Dashboard y estadísticas
+│   │   │   ├── IncidenteController.php # Recepción de reportes
+│   │   │   ├── NoticiaController.php
+│   │   │   └── PanicoController.php    # Gestión de alertas SOS
+│   │   └── Models/                 # Modelos Eloquent (ORM)
+│   │       ├── User.php
+│   │       └── PuntoMapa.php
+│   ├── database/
+│   │   ├── migrations/             # Esquemas de tablas (SQL)
+│   │   └── seeders/                # Datos de prueba iniciales
+│   ├── routes/
+│   │   └── api.php                 # Definición de Endpoints
+│   └── storage/app/public/         # Almacenamiento de evidencias (Imágenes)
 │
 ├── panel-administrativo/ # React Web (Dashboard)
-│   ├── src/pages/            # Vistas: Dashboard, Incidentes, Noticias
-│   ├── src/components/       # MapaGestor, Sidebar, Modales
-│   └── src/api/              # Configuración de Axios
+│   ├──public/
+│   │  └── alert.mp3
+│   │
+│   ├── src/           # Vistas: Dashboard, Incidentes, Noticias
+│   │   ├── api/              # Configuración de Axios
+│   │   │   └── axios.js
+│   │   │
+│   │   ├── assent/
+│   │   │   └── ugr.png
+│   │   │
+│   │   ├── components/       # MapaGestor, Sidebar, Modales
+│   │   │   └── MapaGestor.jsx
+│   │   │
+│   │   ├── layout/
+│   │   │   └── MainLayout.jsx
+│   │   │
+│   │   ├── pages/
+│   │   │   ├── Alertas.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Incidentes.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── Noticias.jsx
+│   │   │   └── Usuarios.jsx
+│   │   │
+│   │   ├── App.jsx
+│   │   ├── index.jsx
+│   └── └── main.jsx
 │
-└── app-movil/            # Android Kotlin (Cliente)
-    ├── ui/                   # Screens: Login, Home, Report, Mapas
-    ├── data/                 # Modelos, RetrofitClient, Config
+│
+└── app/            # Android Kotlin (Cliente)
+    ├──manifest/
+    │  └── androidmanifest.xml
+    │
+    ├──Kotlin+java/
+    │   └── com.example.ejemplo/
+    │   │   ├── data/
+    │   │   │   ├── Config.kt               # IP Global del Servidor
+    │   │   │   ├── Modelo.kt               # Data Classes (ReporteItem, Noticia...)
+    │   │   │   ├── RetrofitClient.kt       # Cliente HTTP
+    │   │   │   ├── SessionManager.kt       # Gestión de Sesión
+    │   │   │   ├── loginModels.kt
+    │   │   │   └── SettingsManager.kt      # Preferencias de Usuario
+    │   │   │
+    │   │   ├──
+    │   │   ├──
+    │   │   ├──
+    │   │   ├──
+    │   │   ├──
+        │   │   ├──
+      ui/                   # Screens: Login, Home, Report, Mapas, etc
+    ├── data/                 # Modelos, RetrofitClient, Config, etc
     └── utils/                # NetworkUtils, VibrationUtils, LocationService
 ```
 ## 👥 Autores
