@@ -145,6 +145,3 @@ Trabajo de Integración Curricular para la obtención del título de Ingeniero e
 ## 📄 Licencia
 Este proyecto es de uso exclusivo académico e institucional para la Universidad Estatal de Bolívar. Todos los derechos reservados.
 
-
-# Iniciar servidor
-php artisan serve --host=0.0.0.0
