@@ -3,7 +3,8 @@ import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 
 import logoUgr from '../assets/ugr.png';
-// Iconos para inputs (Opcional pero recomendado)
+
+// Iconos para inputs
 const IconEmail = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>;
 const IconLock = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>;
 
@@ -20,9 +21,16 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const response = await api.post('/login', { email, password });
+            // Enviamos origen: 'web' para validar permisos administrativos en el backend
+            const response = await api.post('/login', { 
+                email, 
+                password,
+                origen: 'web' 
+            });
+            
             const rol = response.data.user.rol;
             
+            // Doble verificación (Frontend + Backend)
             if (rol !== 'admin' && rol !== 'director') {
                 setError('Acceso denegado: No tienes permisos administrativos.');
                 setLoading(false);
@@ -34,8 +42,15 @@ export default function Login() {
             navigate('/dashboard');
 
         } catch (err) {
-            if (err.response && err.response.status === 401) {
-                setError('Credenciales incorrectas. Inténtalo de nuevo.');
+            // Manejo de errores específicos del backend
+            if (err.response) {
+                if (err.response.status === 401) {
+                    setError('Credenciales incorrectas. Inténtalo de nuevo.');
+                } else if (err.response.status === 403) {
+                    setError(err.response.data.message || 'Acceso denegado.');
+                } else {
+                    setError('Error del servidor. Intenta más tarde.');
+                }
             } else {
                 setError('Error de conexión. Verifica tu red.');
             }
@@ -51,13 +66,12 @@ export default function Login() {
 
             <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md z-10 border border-gray-100">
                 
-                
                 <div className="text-center mb-10">
                     <div className="flex justify-center mb-4">
                         <img 
                             src={logoUgr} 
                             alt="Logo UGR" 
-                            className="h-24 w-auto object-contain" // Ajusta h-24 si lo quieres más grande
+                            className="h-24 w-auto object-contain"
                         />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-800">Bienvenido</h2>
@@ -123,7 +137,7 @@ export default function Login() {
 
                 <div className="mt-8 text-center">
                     <p className="text-xs text-gray-400">
-                       Universidad Estatal de Bolívar-Sistema de Seguridad Integral &copy; {new Date().getFullYear()}
+                       Universidad Estatal de Bolívar - Sistema de Seguridad Integral &copy; {new Date().getFullYear()}
                     </p>
                 </div>
             </div>

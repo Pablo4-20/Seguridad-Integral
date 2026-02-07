@@ -196,7 +196,7 @@ export default function MainLayout() {
                     </button>
                 </div>
 
-                <nav className="flex-1 py-6 px-3 space-y-2 overflow-y-auto">
+               <nav className="flex-1 py-6 px-3 space-y-2 overflow-y-auto">
                     <Link to="/dashboard" className={linkClass('/dashboard')} title="Dashboard">
                         <IconDashboard />
                         {!collapsed && <span className="font-medium">Panel Principal</span>}
@@ -214,11 +214,21 @@ export default function MainLayout() {
                         {!collapsed && <span className="font-medium">Comunicación</span>}
                     </Link>
 
+                    {/* SECCIÓN USUARIOS SEPARADA */}
                     {user.rol === 'director' && (
-                        <Link to="/usuarios" className={linkClass('/usuarios')} title="Usuarios">
-                            <IconUsers />
-                            {!collapsed && <span className="font-medium">Usuarios</span>}
-                        </Link>
+                        <>
+                            {!collapsed && <div className="px-4 mt-4 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Gestión Usuarios</div>}
+                            
+                            <Link to="/usuarios/administrativos" className={linkClass('/usuarios/administrativos')} title="Personal Administrativo">
+                                <IconSettings /> {/* Puedes cambiar el icono */}
+                                {!collapsed && <span className="font-medium">Administrativos</span>}
+                            </Link>
+                            
+                            <Link to="/usuarios/comunidad" className={linkClass('/usuarios/comunidad')} title="Comunidad Universitaria">
+                                <IconUsers />
+                                {!collapsed && <span className="font-medium">Comunidad</span>}
+                            </Link>
+                        </>
                     )}
                 </nav>
 

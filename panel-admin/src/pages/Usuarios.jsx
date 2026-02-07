@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
 
-// --- ICONOS ---
+// Iconos
 const IconAdd = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>;
 const IconEdit = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>;
 const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>;
 const IconClose = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>;
-const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>;
-const IconError = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>;
-const IconWarning = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-orange-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>;
+const IconWeb = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-blue-600"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25" /></svg>;
+const IconMobile = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-green-600"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" /></svg>;
 
-export default function Usuarios() {
+export default function Usuarios({ tipo }) {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,8 +19,36 @@ export default function Usuarios() {
     const [userToDelete, setUserToDelete] = useState(null);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+    // Configuración según el prop 'tipo'
+    const esAdmin = tipo === 'admin';
+    const endpoint = esAdmin ? '/admin/usuarios' : '/admin/comunidad'; // URL DINÁMICA
+
+    const config = esAdmin ? {
+        titulo: 'Administración Web',
+        subtitulo: 'Gestión de Directores y Coordinadores',
+        colorBadge: 'bg-blue-100 text-blue-800',
+        iconoPlataforma: <IconWeb />,
+        textoPlataforma: 'Acceso Web',
+        roles: [
+            { value: 'director', label: 'Director' },
+            { value: 'coordinador', label: 'Coordinador' }
+        ],
+        defaultRol: 'coordinador'
+    } : {
+        titulo: 'Comunidad Universitaria',
+        subtitulo: 'Gestión de Estudiantes y Docentes',
+        colorBadge: 'bg-green-100 text-green-800',
+        iconoPlataforma: <IconMobile />,
+        textoPlataforma: 'Acceso App',
+        roles: [
+            { value: 'estudiante', label: 'Estudiante' },
+            { value: 'docente', label: 'Docente' }
+        ],
+        defaultRol: 'estudiante'
+    };
+
     const [formData, setFormData] = useState({
-        name: '', email: '', password: '', rol: 'admin', cedula: '', telefono: ''
+        name: '', email: '', password: '', rol: config.defaultRol, cedula: '', telefono: ''
     });
 
     const showToast = (message, type = 'success') => {
@@ -31,19 +58,22 @@ export default function Usuarios() {
 
     const cargarUsuarios = async () => {
         try {
-            const res = await api.get('/admin/usuarios');
-            const personal = res.data.filter(u => u.rol === 'director' || u.rol === 'admin');
-            setUsuarios(personal);
+            const res = await api.get(endpoint);
+            setUsuarios(res.data);
         } catch (error) {
-            console.error("Error al cargar usuarios");
+            console.error("Error cargando usuarios");
         }
     };
 
-    useEffect(() => { cargarUsuarios() }, []);
+    // Recargar cuando cambiamos de menú
+    useEffect(() => { 
+        cargarUsuarios();
+        setFormData(prev => ({...prev, rol: config.defaultRol}));
+    }, [tipo]);
 
     const openModal = () => {
         setEditMode(false);
-        setFormData({ name: '', email: '', password: '', rol: 'admin', cedula: '', telefono: '' });
+        setFormData({ name: '', email: '', password: '', rol: config.defaultRol, cedula: '', telefono: '' });
         setIsModalOpen(true);
     };
 
@@ -51,8 +81,12 @@ export default function Usuarios() {
         setEditMode(true);
         setCurrentId(user.id);
         setFormData({
-            name: user.name, email: user.email, password: '', 
-            rol: user.rol, cedula: user.cedula || '', telefono: user.telefono || ''
+            name: user.name, 
+            email: user.email, 
+            password: '', 
+            rol: user.rol, 
+            cedula: user.cedula || '', 
+            telefono: user.telefono || ''
         });
         setIsModalOpen(true);
     };
@@ -67,16 +101,16 @@ export default function Usuarios() {
         setLoading(true);
         try {
             if (editMode) {
-                await api.put(`/admin/usuarios/${currentId}`, formData);
-                showToast('Perfil actualizado correctamente', 'success');
+                await api.put(`${endpoint}/${currentId}`, formData);
+                showToast('Usuario actualizado', 'success');
             } else {
-                await api.post('/admin/usuarios', formData);
-                showToast('Usuario registrado exitosamente', 'success');
+                await api.post(endpoint, formData);
+                showToast('Usuario creado', 'success');
             }
             closeModal();
             cargarUsuarios();
         } catch (error) {
-            showToast('Error al guardar. Revisa los datos.', 'error');
+            showToast('Error al guardar.', 'error');
         } finally {
             setLoading(false);
         }
@@ -89,11 +123,11 @@ export default function Usuarios() {
 
     const handleDeleteConfirm = async () => {
         try {
-            await api.delete(`/admin/usuarios/${userToDelete}`);
+            await api.delete(`${endpoint}/${userToDelete}`);
             showToast('Usuario eliminado', 'success');
             cargarUsuarios();
         } catch (error) {
-            showToast('No puedes eliminar tu propia cuenta.', 'error');
+            showToast('No se pudo eliminar.', 'error');
         } finally {
             setIsDeleteModalOpen(false);
             setUserToDelete(null);
@@ -102,203 +136,114 @@ export default function Usuarios() {
 
     return (
         <div className="relative min-h-screen pb-10">
-            
-            {/* TOAST FLOTANTE */}
-            {toast.show && (
-                <div className={`fixed top-6 right-6 z-[60] flex items-center gap-4 px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-500 ease-out animate-bounce ${
-                    toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
-                } text-white`}>
-                    <div className="p-1 bg-white bg-opacity-20 rounded-full">
-                        {toast.type === 'success' ? <IconCheck /> : <IconError />}
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-sm tracking-wide">{toast.type === 'success' ? '¡LISTO!' : 'ERROR'}</h4>
-                        <p className="text-sm font-medium opacity-90">{toast.message}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* CABECERA */}
-            <div className="flex justify-between items-end mb-8">
+            {/* Cabecera */}
+            <div className="flex justify-between items-end mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Equipo Administrativo</h1>
-                    <p className="text-slate-500 mt-1">Gestión de directores y administradores del sistema.</p>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-2 ${config.colorBadge}`}>
+                        {config.iconoPlataforma}
+                        <span className="uppercase tracking-wide">{config.titulo}</span>
+                    </div>
+                    <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Gestión de Usuarios</h1>
+                    <p className="text-slate-500 mt-1">{config.subtitulo}</p>
                 </div>
                 <button 
                     onClick={openModal}
-                    className="bg-ueb-blue hover:bg-slate-800 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-1"
+                    className={`text-white font-bold py-3 px-6 rounded-xl shadow-lg flex items-center gap-2 transition-all transform hover:-translate-y-1 ${
+                        esAdmin ? 'bg-blue-900 hover:bg-blue-800' : 'bg-green-600 hover:bg-green-700'
+                    }`}
                 >
                     <IconAdd />
                     <span>Nuevo Usuario</span>
                 </button>
             </div>
 
-            {/* TABLA */}
+            {/* Tabla */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <table className="min-w-full divide-y divide-slate-100">
                     <thead className="bg-slate-50">
                         <tr>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nombre</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Rol</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Contacto</th>
-                            <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Opciones</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Nombre</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Rol</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Plataforma</th>
+                            <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {usuarios.map((user) => (
-                            <tr key={user.id} className="hover:bg-slate-50 transition-colors group">
+                            <tr key={user.id} className="hover:bg-slate-50">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
-                                        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-tr from-slate-200 to-slate-300 flex items-center justify-center text-slate-600 font-bold shadow-inner">
+                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold shadow-md mr-4 ${esAdmin ? 'bg-blue-500' : 'bg-green-500'}`}>
                                             {user.name.charAt(0).toUpperCase()}
                                         </div>
-                                        <div className="ml-4">
+                                        <div>
                                             <div className="text-sm font-bold text-slate-800">{user.name}</div>
                                             <div className="text-xs text-slate-500">{user.email}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full uppercase tracking-wide ${
-                                        user.rol === 'director' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-blue-100 text-blue-700 border border-blue-200'
-                                    }`}>
+                                    <span className="px-3 py-1 inline-flex text-xs font-bold rounded-full bg-slate-100 text-slate-700 uppercase">
                                         {user.rol}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-slate-700"><span className="text-slate-400 text-xs mr-1">CI:</span>{user.cedula || 'N/A'}</div>
-                                    <div className="text-sm text-slate-700"><span className="text-slate-400 text-xs mr-1">TEL:</span>{user.telefono || 'N/A'}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => handleEdit(user)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Editar">
-                                            <IconEdit />
-                                        </button>
-                                        <button onClick={() => confirmDeleteClick(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Eliminar">
-                                            <IconTrash />
-                                        </button>
+                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                        {config.iconoPlataforma}
+                                        <span>{config.textoPlataforma}</span>
                                     </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                    <button onClick={() => handleEdit(user)} className="text-indigo-600 hover:text-indigo-900 mr-3"><IconEdit /></button>
+                                    <button onClick={() => confirmDeleteClick(user.id)} className="text-red-600 hover:text-red-900"><IconTrash /></button>
                                 </td>
                             </tr>
                         ))}
-                        {usuarios.length === 0 && (
-                            <tr>
-                                <td colSpan="4" className="px-6 py-12 text-center text-slate-400 italic">
-                                    No hay usuarios registrados aún.
-                                </td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
             </div>
 
-            {/* --- MODAL ELEGANTE (FORMULARIO) --- */}
+            {/* Modal Formulario */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform transition-all scale-100 overflow-hidden">
-                        
-                        {/* Header Modal */}
-                        <div className="bg-white px-8 py-6 border-b border-slate-100 flex justify-between items-center">
-                            <div>
-                                <h3 className="text-xl font-bold text-slate-800">
-                                    {editMode ? 'Editar Perfil' : 'Nuevo Usuario'}
-                                </h3>
-                                <p className="text-sm text-slate-500 mt-1">Complete la información del funcionario.</p>
-                            </div>
-                            <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition">
-                                <IconClose />
-                            </button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                        <div className={`px-8 py-6 border-b border-slate-100 flex justify-between items-center ${esAdmin ? 'bg-blue-50' : 'bg-green-50'}`}>
+                            <h3 className="text-xl font-bold text-slate-800">{editMode ? 'Editar' : 'Crear'} Usuario</h3>
+                            <button onClick={closeModal}><IconClose /></button>
                         </div>
-
-                        {/* Formulario */}
                         <form onSubmit={handleSubmit} className="p-8 space-y-5">
-                            
-                            {/* Inputs Estilizados */}
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nombre Completo</label>
-                                <input 
-                                    name="name" type="text" required 
-                                    className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-ueb-blue focus:border-transparent transition-all outline-none text-slate-800"
-                                    placeholder="Ej: Juan Pérez"
-                                    value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Rol</label>
-                                    <select 
-                                        name="rol" 
-                                        className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-ueb-blue outline-none text-slate-800 appearance-none"
-                                        value={formData.rol} onChange={(e) => setFormData({...formData, rol: e.target.value})}
-                                    >
-                                        <option value="admin">Administrador</option>
-                                        <option value="director">Director</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Cédula</label>
-                                    <input name="cedula" type="text" className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-ueb-blue outline-none text-slate-800" value={formData.cedula} onChange={(e) => setFormData({...formData, cedula: e.target.value})} />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Correo Electrónico</label>
-                                <input name="email" type="email" required className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-ueb-blue outline-none text-slate-800" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                                    Contraseña {editMode && <span className="text-slate-400 normal-case font-normal">(Opcional)</span>}
-                                </label>
-                                <input 
-                                    name="password" type="password" 
-                                    className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-ueb-blue outline-none text-slate-800"
-                                    placeholder={editMode ? "••••••••" : "Mínimo 6 caracteres"}
-                                    required={!editMode}
-                                    value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} 
-                                />
-                            </div>
-
-                            <div className="pt-4 flex gap-3">
-                                <button type="button" onClick={closeModal} className="flex-1 px-4 py-3 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition">
-                                    Cancelar
-                                </button>
-                                <button type="submit" disabled={loading} className="flex-1 px-4 py-3 bg-ueb-blue text-white font-bold rounded-xl hover:bg-slate-900 transition shadow-lg shadow-blue-900/30">
-                                    {loading ? 'Guardando...' : 'Guardar Usuario'}
-                                </button>
+                            <input name="name" required className="w-full px-4 py-3 border rounded-lg" placeholder="Nombre" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                            <select name="rol" className="w-full px-4 py-3 border rounded-lg" value={formData.rol} onChange={(e) => setFormData({...formData, rol: e.target.value})}>
+                                {config.roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                            </select>
+                            <input name="email" type="email" required className="w-full px-4 py-3 border rounded-lg" placeholder="Email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                            <input name="password" type="password" className="w-full px-4 py-3 border rounded-lg" placeholder="Contraseña" required={!editMode} value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
+                            <div className="flex gap-3">
+                                <button type="button" onClick={closeModal} className="flex-1 py-3 border rounded-xl">Cancelar</button>
+                                <button type="submit" className={`flex-1 py-3 text-white font-bold rounded-xl ${esAdmin ? 'bg-blue-900' : 'bg-green-600'}`}>Guardar</button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* --- MODAL ELIMINAR (CONFIRMACIÓN) --- */}
+            {/* Modal Eliminar */}
             {isDeleteModalOpen && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center transform scale-100 transition-all">
-                        <div className="mx-auto bg-orange-50 w-20 h-20 rounded-full flex items-center justify-center mb-6">
-                            <IconWarning />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">¿Estás seguro?</h3>
-                        <p className="text-slate-500 mb-8 leading-relaxed">
-                            Esta acción eliminará permanentemente el acceso de este usuario al sistema.
-                        </p>
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/70 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
+                        <h3 className="text-xl font-bold mb-4">¿Eliminar usuario?</h3>
                         <div className="flex flex-col gap-3">
-                            <button 
-                                onClick={handleDeleteConfirm}
-                                className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 transition"
-                            >
-                                Sí, Eliminar Usuario
-                            </button>
-                            <button 
-                                onClick={() => setIsDeleteModalOpen(false)}
-                                className="w-full py-3 bg-transparent text-slate-500 font-bold hover:text-slate-700 transition"
-                            >
-                                Cancelar
-                            </button>
+                            <button onClick={handleDeleteConfirm} className="w-full py-3 bg-red-600 text-white font-bold rounded-xl">Sí, Eliminar</button>
+                            <button onClick={() => setIsDeleteModalOpen(false)} className="w-full py-3 text-slate-500 font-bold">Cancelar</button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Toast Notification */}
+            {toast.show && (
+                <div className={`fixed top-6 right-6 px-6 py-4 rounded-xl text-white font-bold ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+                    {toast.message}
                 </div>
             )}
         </div>
