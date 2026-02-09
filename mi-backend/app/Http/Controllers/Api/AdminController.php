@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash; // Importante para la seguridad de contraseñas
+use App\Models\User;
+use App\Models\PuntoMapa;
 
 class AdminController extends Controller
 {
@@ -112,6 +115,7 @@ class AdminController extends Controller
             'grafico_lineal' => $datosGrafico
         ]);
     }
+
     public function incidentes()
     {
         try {
@@ -121,10 +125,8 @@ class AdminController extends Controller
                 ->select(
                     'incidentes.*', // Datos del reporte
                     'users.name as estudiante_nombre', // Nombre del alumno
-                    'users.email as estudiante_email'  // Email (Este nunca falla)
-                    // HE QUITADO 'cedula' y 'telefono' TEMPORALMENTE PARA EVITAR ERRORES
+                    'users.email as estudiante_email'  // Email
                 )
-                // CORRECCIÓN CLAVE: Especificamos la tabla para el orden
                 ->orderBy('incidentes.created_at', 'desc') 
                 ->get();
 
@@ -139,7 +141,6 @@ class AdminController extends Controller
             return response()->json($incidentes);
 
         } catch (\Exception $e) {
-            // Si falla, enviamos el mensaje real del error al navegador
             return response()->json([
                 'error' => 'Error en base de datos',
                 'detalle' => $e->getMessage()
@@ -183,7 +184,6 @@ class AdminController extends Controller
         // --- TRANSFORMACIÓN DE IMÁGENES ---
         $noticias->transform(function ($item) {
             if ($item->imagen_url) {
-                // Esto genera: http://TU_IP:8000/storage/carpeta/foto.jpg
                 $item->imagen_url = asset('storage/' . $item->imagen_url);
             }
             return $item;
@@ -213,10 +213,11 @@ class AdminController extends Controller
 
         return response()->json(['message' => 'Publicación exitosa']);
     }
+
     // --- ACTUALIZAR NOTICIA ---
     public function actualizarNoticia(Request $request, $id)
     {
-        // 1. Validar (La imagen es opcional al editar)
+        // 1. Validar
         $request->validate([
             'titulo' => 'required|string',
             'contenido' => 'required|string',
@@ -238,11 +239,8 @@ class AdminController extends Controller
             'updated_at' => now()
         ];
 
-        // 3. Si subió nueva imagen, la guardamos
+        // 3. Si subió nueva imagen
         if ($request->hasFile('imagen')) {
-            // Opcional: Borrar la vieja si quieres ahorrar espacio
-            // Storage::disk('public')->delete($noticia->imagen_url);
-
             $path = $request->file('imagen')->store('noticias', 'public');
             $datosActualizar['imagen_url'] = $path;
         }
@@ -252,38 +250,50 @@ class AdminController extends Controller
 
         return response()->json(['message' => 'Noticia actualizada']);
     }
+
     // --- ELIMINAR NOTICIA ---
     public function borrarNoticia($id)
     {
         DB::table('noticias')->where('id', $id)->delete();
         return response()->json(['message' => 'Eliminado']);
     }
+
     // --- GESTIÓN DE USUARIOS ---
 
-    // Listar todos los usuarios
-    public function indexUsuarios()
+    // 1. LISTAR ADMINISTRATIVOS (Director y Administrador)
+    public function index()
     {
-        // Ocultamos la contraseña por seguridad
-        $usuarios = \App\Models\User::orderBy('created_at', 'desc')->get();
+        $usuarios = User::whereIn('rol', ['director', 'administrador'])
+                        ->orderBy('created_at', 'desc')
+                        ->get();
         return response()->json($usuarios);
     }
 
-    // Crear nuevo usuario
+    // 2. LISTAR COMUNIDAD (Usuarios de la App - Rol 'comunidad')
+    public function comunidad()
+    {
+        $usuarios = User::where('rol', 'comunidad')
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+        return response()->json($usuarios);
+    }
+
+    // Crear nuevo usuario (Solo administrativos)
     public function storeUsuario(Request $request)
     {
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
-            'rol' => 'required|in:admin,director,estudiante',
+            'rol' => 'required|in:administrador,director,comunidad', // Roles actualizados
             'cedula' => 'nullable|string',
             'telefono' => 'nullable|string'
         ]);
 
-        $user = \App\Models\User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => bcrypt($request->password),
+            'password' => Hash::make($request->password), // Uso de Hash::make
             'rol' => $request->rol,
             'cedula' => $request->cedula,
             'telefono' => $request->telefono
@@ -295,11 +305,11 @@ class AdminController extends Controller
     // Actualizar usuario
     public function updateUsuario(Request $request, $id)
     {
-        $user = \App\Models\User::findOrFail($id);
+        $user = User::findOrFail($id);
 
         $request->validate([
             'name' => 'required|string',
-            'email' => 'required|email|unique:users,email,' . $id, // Ignorar el email propio al validar
+            'email' => 'required|email|unique:users,email,' . $id,
             'rol' => 'required'
         ]);
 
@@ -307,7 +317,7 @@ class AdminController extends Controller
         
         // Solo actualizamos la contraseña si enviaron una nueva
         if ($request->filled('password')) {
-            $data['password'] = bcrypt($request->password);
+            $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
@@ -322,18 +332,17 @@ class AdminController extends Controller
             return response()->json(['error' => 'No puedes eliminar tu propia cuenta'], 400);
         }
         
-        \App\Models\User::destroy($id);
+        User::destroy($id);
         return response()->json(['message' => 'Usuario eliminado']);
     }
+
     // --- GESTIÓN DE PUNTOS DEL MAPA ---
-   public function listarPuntos()
+    public function listarPuntos()
     {
         try {
-            // Usamos la ruta completa del modelo para evitar errores de importación
-            $puntos = \App\Models\PuntoMapa::all();
+            $puntos = PuntoMapa::all();
             return response()->json($puntos);
         } catch (\Exception $e) {
-            // Si falla, devolvemos el error exacto para verlo en el Logcat
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -347,16 +356,16 @@ class AdminController extends Controller
             'tipo' => 'required'
         ]);
 
-        \App\Models\PuntoMapa::create($request->all());
+        PuntoMapa::create($request->all());
         return response()->json(['message' => 'Punto guardado en el mapa']);
     }
 
     public function borrarPunto($id)
     {
-        \App\Models\PuntoMapa::destroy($id);
+        PuntoMapa::destroy($id);
         return response()->json(['message' => 'Punto eliminado']);
     }
-    // --- ESTA ES LA FUNCIÓN QUE FALTA PARA QUE FUNCIONE LA EDICIÓN ---
+
     public function actualizarPunto(Request $request, $id)
     {
         $request->validate([
@@ -366,7 +375,7 @@ class AdminController extends Controller
             'tipo' => 'required'
         ]);
 
-        $punto = \App\Models\PuntoMapa::findOrFail($id);
+        $punto = PuntoMapa::findOrFail($id);
         
         $punto->update([
             'titulo' => $request->titulo,

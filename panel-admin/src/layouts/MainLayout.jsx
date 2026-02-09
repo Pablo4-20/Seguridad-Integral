@@ -35,7 +35,7 @@ export default function MainLayout() {
     // --- ALERTAS Y NOTIFICACIONES ---
     const [alertNotification, setAlertNotification] = useState(null); 
     const prevAlertCount = useRef(0);
-    const prevIncidentCount = useRef(0); // Referencia para incidentes
+    const prevIncidentCount = useRef(0); 
     const audioRef = useRef(null);
 
     useEffect(() => {
@@ -58,8 +58,7 @@ export default function MainLayout() {
                     prevAlertCount.current = currentAlerts;
                 }
 
-                // 2. NUEVO REPORTE (Corrección del nombre de variable)
-                // En el backend se llama 'pendientes', no 'incidentes_pendientes'
+                // 2. NUEVO REPORTE 
                 const currentIncidents = stats.pendientes; 
                 
                 if (prevIncidentCount.current === 0 && currentIncidents > 0) {
@@ -68,7 +67,6 @@ export default function MainLayout() {
                     triggerNotification('report', "Nuevo Incidente Reportado");
                     prevIncidentCount.current = currentIncidents;
                 } else if (currentIncidents < prevIncidentCount.current) {
-                    // Si bajó (se atendió uno), actualizamos la referencia
                     prevIncidentCount.current = currentIncidents;
                 }
 
@@ -113,9 +111,13 @@ export default function MainLayout() {
         setIsLogoutModalOpen(false);
     };
 
-    const linkClass = (path) => `
+    // --- LÓGICA DE ESTILOS DE LINKS ---
+    // isUsersRoute es true si estamos en /usuarios/administrativos O /usuarios/comunidad
+    const isUsersRoute = location.pathname.includes('/usuarios');
+
+    const linkClass = (path, isActiveOverride = false) => `
         flex items-center gap-4 py-3 px-4 rounded-lg transition-all duration-300
-        ${location.pathname === path 
+        ${(location.pathname === path || isActiveOverride)
             ? "bg-ueb-blue text-white shadow-lg dark:bg-blue-600" 
             : "text-slate-600 hover:bg-slate-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"}
         ${collapsed ? "justify-center" : ""}
@@ -124,7 +126,7 @@ export default function MainLayout() {
     return (
         <div className="flex h-screen bg-slate-100 dark:bg-slate-900 transition-colors duration-300 relative overflow-hidden">
             
-            {/* --- NOTIFICACIÓN FLOTANTE DINÁMICA --- */}
+            {/* --- NOTIFICACIÓN FLOTANTE --- */}
             {alertNotification && (
                 <div className={`fixed top-5 right-5 z-[150] w-full max-w-md bg-white dark:bg-slate-800 border-l-8 rounded-lg shadow-2xl transform transition-all duration-500 ease-out animate-bounce flex overflow-hidden ${
                     alertNotification.type === 'panic' ? 'border-red-600' : 'border-blue-600'
@@ -168,24 +170,18 @@ export default function MainLayout() {
                 </div>
             )}
 
-            {/* SIDEBAR (Igual que antes) */}
+            {/* SIDEBAR */}
            <aside className={`bg-white dark:bg-slate-800 shadow-2xl flex flex-col transition-all duration-300 z-20 ${collapsed ? 'w-20' : 'w-72'}`}>
                 
                 <div className="h-20 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-700">
                     {!collapsed ? (
                         <div className="flex items-center gap-3">
-                            {/* AQUÍ ESTÁ TU ICONO */}
-                            <img 
-                                src={logoUgr} 
-                                alt="Logo" 
-                                className="h-10 w-auto object-contain" // Ajusta h-10 según el tamaño que quieras
-                            />
+                            <img src={logoUgr} alt="Logo" className="h-10 w-auto object-contain" />
                             <h1 className="text-xl font-extrabold text-ueb-blue dark:text-white tracking-tight">
                                 Seguridad-<span className="text-red-600">UEB</span>
                             </h1>
                         </div>
                     ) : (
-                        // Opcional: Mostrar solo el logo cuando está colapsado
                         <div className="w-full flex justify-center">
                              <img src={logoUgr} alt="Logo" className="h-8 w-auto" />
                         </div>
@@ -214,19 +210,19 @@ export default function MainLayout() {
                         {!collapsed && <span className="font-medium">Comunicación</span>}
                     </Link>
 
-                    {/* SECCIÓN USUARIOS SEPARADA */}
+                    {/* SECCIÓN USUARIOS - UNIFICADA */}
                     {user.rol === 'director' && (
                         <>
-                            {!collapsed && <div className="px-4 mt-4 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Gestión Usuarios</div>}
+                            {!collapsed && <div className="px-4 mt-4 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Administración</div>}
                             
-                            <Link to="/usuarios/administrativos" className={linkClass('/usuarios/administrativos')} title="Personal Administrativo">
-                                <IconSettings /> {/* Puedes cambiar el icono */}
-                                {!collapsed && <span className="font-medium">Administrativos</span>}
-                            </Link>
-                            
-                            <Link to="/usuarios/comunidad" className={linkClass('/usuarios/comunidad')} title="Comunidad Universitaria">
+                            {/* UN SOLO BOTÓN QUE LLEVA A LA VISTA POR DEFECTO (Administrativos) */}
+                            <Link 
+                                to="/usuarios/administrativos" 
+                                className={linkClass('/usuarios/administrativos', isUsersRoute)} 
+                                title="Gestión de Usuarios"
+                            >
                                 <IconUsers />
-                                {!collapsed && <span className="font-medium">Comunidad</span>}
+                                {!collapsed && <span className="font-medium">Usuarios</span>}
                             </Link>
                         </>
                     )}
@@ -284,7 +280,7 @@ export default function MainLayout() {
                 </div>
             )}
 
-            {/* MODAL CONFIGURACIÓN (Igual que antes) */}
+            {/* MODAL CONFIGURACIÓN */}
             {settingsModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 
 // Iconos
@@ -21,19 +22,19 @@ export default function Usuarios({ tipo }) {
 
     // Configuración según el prop 'tipo'
     const esAdmin = tipo === 'admin';
-    const endpoint = esAdmin ? '/admin/usuarios' : '/admin/comunidad'; // URL DINÁMICA
+    const endpoint = esAdmin ? '/admin/usuarios' : '/admin/comunidad';
 
     const config = esAdmin ? {
-        titulo: 'Administración Web',
-        subtitulo: 'Gestión de Directores y Coordinadores',
+        titulo: 'Personal Administrativo',
+        subtitulo: 'Gestión de Directores y Administradores', // Texto actualizado
         colorBadge: 'bg-blue-100 text-blue-800',
         iconoPlataforma: <IconWeb />,
         textoPlataforma: 'Acceso Web',
         roles: [
             { value: 'director', label: 'Director' },
-            { value: 'coordinador', label: 'Coordinador' }
+            { value: 'administrador', label: 'Administrador' } // CAMBIO AQUÍ: coordinador -> administrador
         ],
-        defaultRol: 'coordinador'
+        defaultRol: 'administrador' // Por defecto sugerimos administrador
     } : {
         titulo: 'Comunidad Universitaria',
         subtitulo: 'Gestión de Estudiantes y Docentes',
@@ -65,7 +66,6 @@ export default function Usuarios({ tipo }) {
         }
     };
 
-    // Recargar cuando cambiamos de menú
     useEffect(() => { 
         cargarUsuarios();
         setFormData(prev => ({...prev, rol: config.defaultRol}));
@@ -136,6 +136,31 @@ export default function Usuarios({ tipo }) {
 
     return (
         <div className="relative min-h-screen pb-10">
+            
+            {/* TABS DE NAVEGACIÓN */}
+            <div className="mb-6 bg-slate-200 p-1 rounded-xl inline-flex shadow-inner">
+                <Link 
+                    to="/usuarios/administrativos"
+                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                        esAdmin 
+                        ? 'bg-white text-ueb-blue shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    Administrativos
+                </Link>
+                <Link 
+                    to="/usuarios/comunidad"
+                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                        !esAdmin 
+                        ? 'bg-white text-green-600 shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    Comunidad
+                </Link>
+            </div>
+
             {/* Cabecera */}
             <div className="flex justify-between items-end mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <div>
@@ -179,6 +204,7 @@ export default function Usuarios({ tipo }) {
                                         <div>
                                             <div className="text-sm font-bold text-slate-800">{user.name}</div>
                                             <div className="text-xs text-slate-500">{user.email}</div>
+                                            {!esAdmin && <div className="text-[10px] text-slate-400">CI: {user.cedula}</div>}
                                         </div>
                                     </div>
                                 </td>
@@ -201,6 +227,9 @@ export default function Usuarios({ tipo }) {
                         ))}
                     </tbody>
                 </table>
+                {usuarios.length === 0 && (
+                    <div className="p-10 text-center text-slate-400 text-sm">No hay usuarios registrados aquí.</div>
+                )}
             </div>
 
             {/* Modal Formulario */}
@@ -213,13 +242,21 @@ export default function Usuarios({ tipo }) {
                         </div>
                         <form onSubmit={handleSubmit} className="p-8 space-y-5">
                             <input name="name" required className="w-full px-4 py-3 border rounded-lg" placeholder="Nombre" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
-                            <select name="rol" className="w-full px-4 py-3 border rounded-lg" value={formData.rol} onChange={(e) => setFormData({...formData, rol: e.target.value})}>
-                                {config.roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                            </select>
+                            
+                            <div className="flex gap-4">
+                                <select name="rol" className="w-full px-4 py-3 border rounded-lg bg-white" value={formData.rol} onChange={(e) => setFormData({...formData, rol: e.target.value})}>
+                                    {config.roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                </select>
+                                {!esAdmin && (
+                                    <input name="cedula" className="w-full px-4 py-3 border rounded-lg" placeholder="Cédula" value={formData.cedula} onChange={(e) => setFormData({...formData, cedula: e.target.value})} />
+                                )}
+                            </div>
+
                             <input name="email" type="email" required className="w-full px-4 py-3 border rounded-lg" placeholder="Email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-                            <input name="password" type="password" className="w-full px-4 py-3 border rounded-lg" placeholder="Contraseña" required={!editMode} value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
+                            <input name="password" type="password" className="w-full px-4 py-3 border rounded-lg" placeholder={`Contraseña ${editMode ? '(Opcional)' : ''}`} required={!editMode} value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
+                            
                             <div className="flex gap-3">
-                                <button type="button" onClick={closeModal} className="flex-1 py-3 border rounded-xl">Cancelar</button>
+                                <button type="button" onClick={closeModal} className="flex-1 py-3 border rounded-xl hover:bg-slate-50">Cancelar</button>
                                 <button type="submit" className={`flex-1 py-3 text-white font-bold rounded-xl ${esAdmin ? 'bg-blue-900' : 'bg-green-600'}`}>Guardar</button>
                             </div>
                         </form>

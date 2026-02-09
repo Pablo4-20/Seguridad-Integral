@@ -13,10 +13,10 @@ const ProtectedRoute = () => {
   return token ? <Outlet /> : <Navigate to="/" />;
 };
 
-// --- NUEVO: Verifica que sea DIRECTOR ---
+// --- Verifica que sea DIRECTOR ---
 const DirectorRoute = () => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    // Si es director, pasa. Si es admin, lo rebota al dashboard.
+    // Si es director, pasa. Si es admin/gestor, lo rebota al dashboard.
     return user.rol === 'director' ? <Outlet /> : <Navigate to="/dashboard" />;
 };
 
@@ -35,7 +35,9 @@ function App() {
 
                 {/* RUTA PROTEGIDA SOLO PARA DIRECTORES */}
                 <Route element={<DirectorRoute />}>
-                    <Route path="/usuarios" element={<Usuarios />} />
+                    {/* El componente Usuarios recibe la prop 'tipo' para saber qué cargar */}
+                    <Route path="/usuarios/administrativos" element={<Usuarios tipo="admin" />} />
+                    <Route path="/usuarios/comunidad" element={<Usuarios tipo="comunidad" />} />
                 </Route>
 
             </Route>

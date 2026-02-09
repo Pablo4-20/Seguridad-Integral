@@ -16,30 +16,34 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // 1. DIRECTOR (Para entrar al Panel Web)
         User::create([
             'name' => 'Director General',
             'email' => 'director@ueb.edu.ec',
             'password' => Hash::make('admin123'),
-            'rol' => 'director',
+            'rol' => 'director', 
             'cedula' => '0101010101',
             'telefono' => '0991111111',
         ]);
 
-        // ADMIN (Soporte)
+        // 2. ADMINISTRADOR (Soporte)
         User::create([
             'name' => 'Admin Sistema',
             'email' => 'admin@ueb.edu.ec',
             'password' => Hash::make('admin123'),
-            'rol' => 'admin',
+            'rol' => 'administrador', 
             'cedula' => '0202020202',
             'telefono' => '0992222222',
         ]);
 
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => bcrypt('password'),
+        // 3. USUARIO DE COMUNIDAD (Para entrar a la App Móvil)
+        User::create([
+            'name' => 'Estudiante Prueba',
+            'email' => 'estudiante@ueb.edu.ec',
+            'password' => Hash::make('123456'), // Contraseña conocida
+            'rol' => 'comunidad',             // <--- ESTO ES LO QUE FALTABA
+            'cedula' => '0505050505',
+            'telefono' => '0995555555',
         ]);
     }
 }
