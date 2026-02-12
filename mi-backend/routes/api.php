@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\AdminController;
 // --- RUTA PÚBLICA (Login) ---
 Route::get('/mapa/puntos', [AdminController::class, 'listarPuntos']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
 
 // --- RUTAS PROTEGIDAS (Requieren Token) ---
 Route::middleware('auth:sanctum')->group(function () {
@@ -53,6 +54,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/usuarios', [AdminController::class, 'storeUsuario']);
     Route::put('/admin/usuarios/{id}', [AdminController::class, 'updateUsuario']);
     Route::delete('/admin/usuarios/{id}', [AdminController::class, 'destroyUsuario']);
+
+    //CRUD de usuarios de la comunidad (App móvil)
+    Route::post('/admin/comunidad', [AdminController::class, 'storeUsuario']);
+    Route::put('/admin/comunidad/{id}', [AdminController::class, 'updateUsuario']);
+    Route::delete('/admin/comunidad/{id}', [AdminController::class, 'destroyUsuario']);
 
     // --- GESTIÓN DE PUNTOS DEL MAPA ---
     Route::put('/admin/mapa/{id}', [AdminController::class, 'actualizarPunto']);

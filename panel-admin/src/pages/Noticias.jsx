@@ -68,7 +68,16 @@ export default function Noticias() {
     };
 
     const formats = [
-        'header', 'bold', 'italic', 'underline', 'strike', 'list', 'bullet', 'color', 'background', 'align'
+        'header',
+         'bold', 
+         'italic',
+          'underline', 
+          'strike', 
+          'list', 
+          //'bullet',
+           'color', 
+           'background',
+            'align'
     ];
 
     const showToast = (message, type = 'success') => {

@@ -138,7 +138,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* --- TARJETAS CON NUEVO DISEÑO --- */}
+            {/* --- TARJETAS --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <CardStat 
                     title="Pendientes" 
@@ -164,13 +164,14 @@ export default function Dashboard() {
                     icon={<IconAlert />} 
                     link="/alertas" 
                 />
+                {/* --- CORRECCIÓN AQUÍ --- */}
                 <CardStat 
                     title="Usuarios" 
                     value={data.tarjetas.usuarios} 
                     trend="Comunidad activa" 
                     color="blue" 
                     icon={<IconUsers />} 
-                    link="/usuarios" 
+                    link="/usuarios/comunidad" 
                 />
             </div>
 
@@ -225,9 +226,8 @@ export default function Dashboard() {
     );
 }
 
-// --- COMPONENTE DE TARJETA REDISEÑADO ---
+// --- COMPONENTE DE TARJETA ---
 function CardStat({ title, value, trend, color, icon, link }) {
-    // Configuración de colores
     const styles = {
         red: { border: 'border-l-red-500', bgIcon: 'bg-red-50', textIcon: 'text-red-600', textTrend: 'text-red-600' },
         yellow: { border: 'border-l-yellow-500', bgIcon: 'bg-yellow-50', textIcon: 'text-yellow-600', textTrend: 'text-yellow-600' },

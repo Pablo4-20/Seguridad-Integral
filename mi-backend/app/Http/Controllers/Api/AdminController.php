@@ -272,34 +272,82 @@ class AdminController extends Controller
     // 2. LISTAR COMUNIDAD (Usuarios de la App - Rol 'comunidad')
     public function comunidad()
     {
-        $usuarios = User::where('rol', 'comunidad')
+        // CORRECCIÓN: Usamos whereIn para incluir todos los roles de la App móvil
+        $usuarios = User::whereIn('rol', ['estudiante', 'docente', 'comunidad'])
                         ->orderBy('created_at', 'desc')
                         ->get();
+        
         return response()->json($usuarios);
     }
 
     // Crear nuevo usuario (Solo administrativos)
     public function storeUsuario(Request $request)
     {
+        // 1. Validaciones de formato básico
         $request->validate([
             'name' => 'required|string',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email',
             'password' => 'required|min:6',
-            'rol' => 'required|in:administrador,director,comunidad', // Roles actualizados
-            'cedula' => 'nullable|string',
+            'rol' => 'required|in:administrador,director,estudiante,docente', // Ajusta según tus roles reales
+            'cedula' => 'required|string|min:10',
             'telefono' => 'nullable|string'
         ]);
 
+        // 2. Definir los Grupos
+        $rolesAdministrativos = ['director', 'administrador'];
+        
+        // ¿El usuario que intentamos crear es Admin?
+        $esNuevoAdmin = in_array($request->rol, $rolesAdministrativos);
+
+        // 3. VALIDACIÓN DE DUPLICADOS (Lógica por Grupos)
+        
+        // A) Validar CÉDULA
+        $existeCedulaEnSuGrupo = User::where('cedula', $request->cedula)
+            ->where(function ($query) use ($esNuevoAdmin, $rolesAdministrativos) {
+                if ($esNuevoAdmin) {
+                    // Si creo un Admin, busco si YA existe otro Admin con esa cédula
+                    $query->whereIn('rol', $rolesAdministrativos);
+                } else {
+                    // Si creo un Comunidad, busco si YA existe otro Comunidad con esa cédula
+                    $query->whereNotIn('rol', $rolesAdministrativos);
+                }
+            })->exists();
+
+        if ($existeCedulaEnSuGrupo) {
+            $grupo = $esNuevoAdmin ? "Administrativo" : "Comunidad";
+            return response()->json([
+                'message' => "La cédula ya existe registrada en el grupo de $grupo."
+            ], 422);
+        }
+
+        // B) Validar CORREO (Misma lógica: se permite repetir SOLO si es entre Admin y Comunidad)
+        $existeEmailEnSuGrupo = User::where('email', $request->email)
+            ->where(function ($query) use ($esNuevoAdmin, $rolesAdministrativos) {
+                if ($esNuevoAdmin) {
+                    $query->whereIn('rol', $rolesAdministrativos);
+                } else {
+                    $query->whereNotIn('rol', $rolesAdministrativos);
+                }
+            })->exists();
+
+        if ($existeEmailEnSuGrupo) {
+            $grupo = $esNuevoAdmin ? "Administrativo" : "Comunidad";
+            return response()->json([
+                'message' => "El correo ya está en uso por otro usuario de $grupo."
+            ], 422);
+        }
+
+        // 4. Crear el Usuario
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password), // Uso de Hash::make
+            'password' => Hash::make($request->password),
             'rol' => $request->rol,
             'cedula' => $request->cedula,
             'telefono' => $request->telefono
         ]);
 
-        return response()->json(['message' => 'Usuario creado', 'user' => $user]);
+        return response()->json(['message' => 'Usuario creado exitosamente', 'user' => $user]);
     }
 
     // Actualizar usuario
@@ -309,20 +357,55 @@ class AdminController extends Controller
 
         $request->validate([
             'name' => 'required|string',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email',
+            'cedula' => 'required|string',
             'rol' => 'required'
         ]);
 
+        // Grupos
+        $rolesAdministrativos = ['director', 'administrador'];
+        $esAdminEditado = in_array($request->rol, $rolesAdministrativos); // Usamos el rol que viene en el request
+
+        // 1. Validar Cédula (Excluyendo al propio usuario)
+        $existeCedula = User::where('cedula', $request->cedula)
+            ->where('id', '!=', $id) // Ignorar este usuario
+            ->where(function ($query) use ($esAdminEditado, $rolesAdministrativos) {
+                if ($esAdminEditado) {
+                    $query->whereIn('rol', $rolesAdministrativos);
+                } else {
+                    $query->whereNotIn('rol', $rolesAdministrativos);
+                }
+            })->exists();
+
+        if ($existeCedula) {
+            return response()->json(['message' => 'La cédula ya existe en otro usuario de este grupo.'], 422);
+        }
+
+        // 2. Validar Email (Excluyendo al propio usuario)
+        $existeEmail = User::where('email', $request->email)
+            ->where('id', '!=', $id)
+            ->where(function ($query) use ($esAdminEditado, $rolesAdministrativos) {
+                if ($esAdminEditado) {
+                    $query->whereIn('rol', $rolesAdministrativos);
+                } else {
+                    $query->whereNotIn('rol', $rolesAdministrativos);
+                }
+            })->exists();
+
+        if ($existeEmail) {
+            return response()->json(['message' => 'El correo ya existe en otro usuario de este grupo.'], 422);
+        }
+
+        // 3. Actualizar
         $data = $request->only(['name', 'email', 'rol', 'cedula', 'telefono']);
         
-        // Solo actualizamos la contraseña si enviaron una nueva
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
 
-        return response()->json(['message' => 'Usuario actualizado']);
+        return response()->json(['message' => 'Usuario actualizado correctamente']);
     }
 
     // Eliminar usuario
