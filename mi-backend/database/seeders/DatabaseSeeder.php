@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             'rol' => 'director', 
             'cedula' => '0101010101',
             'telefono' => '0991111111',
+            'email_verified_at' => now(),
         ]);
 
         // 2. ADMINISTRADOR (Soporte)
@@ -34,6 +35,8 @@ class DatabaseSeeder extends Seeder
             'rol' => 'administrador', 
             'cedula' => '0202020202',
             'telefono' => '0992222222',
+            'email_verified_at' => now(),
+            
         ]);
 
         // 3. USUARIO DE COMUNIDAD (Para entrar a la App Móvil)
@@ -44,6 +47,7 @@ class DatabaseSeeder extends Seeder
             'rol' => 'comunidad',             // <--- ESTO ES LO QUE FALTABA
             'cedula' => '0505050505',
             'telefono' => '0995555555',
+            'email_verified_at' => now(),
         ]);
     }
 }

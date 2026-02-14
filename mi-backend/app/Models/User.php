@@ -2,23 +2,26 @@
 
 namespace App\Models;
 
-use Laravel\Sanctum\HasApiTokens; // <--- 1. IMPORTANTE: Asegúrate de que esta línea esté
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\MustVerifyEmail; // Importación correcta
 
-class User extends Authenticatable
+// 1. AQUÍ ESTABA EL ERROR: Faltaba "implements MustVerifyEmail"
+class User extends Authenticatable implements MustVerifyEmail 
 {
-    // <--- 2. IMPORTANTE: Agrega HasApiTokens aquí dentro
-    use HasApiTokens, HasFactory, Notifiable; 
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'rol',      // Agregamos estos campos que creamos en la migración
+        'rol',
         'cedula',
         'telefono',
+        'fcm_token',
+        'foto_perfil' // (Opcional: agrégalo si vas a guardar fotos)
     ];
 
     protected $hidden = [
@@ -30,7 +33,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            
         ];
     }
 }

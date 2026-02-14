@@ -7,72 +7,54 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash; // Importante para verificar contraseñas manualmente
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
     // --- 1. LOGIN INTELIGENTE (Soporta doble identidad) ---
-    public function login(Request $request)
-    {
-        // Validar datos de entrada
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
 
-        // Buscamos TODOS los usuarios con ese correo (puede haber 1 o 2)
-        $usuarios = User::where('email', $request->email)->get();
+public function login(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
 
-        $userEncontrado = null;
+    // 1. Buscar al usuario por email
+    $user = User::where('email', $request->email)->first();
 
-        foreach ($usuarios as $user) {
-            // Verificamos si la contraseña coincide
-            if (Hash::check($request->password, $user->password)) {
-                
-                // Si aún no hemos seleccionado ninguno, tomamos este
-                if (!$userEncontrado) {
-                    $userEncontrado = $user;
-                } else {
-                    // SI YA TENEMOS UNO SELECCIONADO, APLICAMOS LA REGLA DE PRIORIDAD:
-                    // Si el usuario seleccionado es Administrativo (Director/Admin)
-                    // y el nuevo que encontramos es Comunidad (Estudiante/Docente),
-                    // NOS QUEDAMOS CON EL DE COMUNIDAD (porque la App es para ellos).
-                    
-                    $esAdminActual = in_array($userEncontrado->rol, ['director', 'administrador']);
-                    $esComunidadNuevo = !in_array($user->rol, ['director', 'administrador']);
-
-                    if ($esAdminActual && $esComunidadNuevo) {
-                        $userEncontrado = $user;
-                    }
-                }
-            }
-        }
-
-        // Si después del ciclo no encontramos usuario o la contraseña falló
-        if (!$userEncontrado) {
-            return response()->json(['message' => 'Credenciales incorrectas'], 401);
-        }
-
-        // Generamos el Token (Pasaporte para la App)
-        $token = $userEncontrado->createToken('auth_token')->plainTextToken;
-
+    // 2. Verificar si existe y si la contraseña es correcta
+    if (!$user || !Hash::check($request->password, $user->password)) {
         return response()->json([
-            'message' => 'Bienvenido ' . $userEncontrado->name,
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => [
-                'id' => $userEncontrado->id,
-                'nombre' => $userEncontrado->name,
-                'email' => $userEncontrado->email,
-                'rol' => $userEncontrado->rol,
-                'foto_perfil' => $userEncontrado->foto_perfil ? asset($userEncontrado->foto_perfil) : null
-            ]
-        ]);
+            'message' => 'Credenciales incorrectas',
+            'errors' => ['email' => ['El usuario o la contraseña no coinciden']]
+        ], 401);
     }
+
+    // 3. (Opcional) Verificar roles específicos si es necesario
+    // if ($user->rol === 'rol_bloqueado') { ... }
+
+    // 4. Generar Token
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    // 5. Devolver respuesta exitosa
+    return response()->json([
+        'message' => 'Bienvenido ' . $user->name,
+        'access_token' => $token,
+        'token_type' => 'Bearer',
+        'user' => [
+            'id' => $user->id,
+            'nombre' => $user->name,
+            'email' => $user->email,
+            'rol' => $user->rol,
+            'foto_perfil' => $user->foto_perfil ? asset($user->foto_perfil) : null
+        ]
+    ]);
+}
 
     // --- 2. REGISTRO (Para la App Móvil) ---
     public function register(Request $request)
     {
-        // 1. Validación básica (Sin 'unique' para permitir la doble identidad)
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email',
@@ -81,44 +63,49 @@ class AuthController extends Controller
             'telefono' => 'nullable|string'
         ]);
 
-        // 2. Validar que NO exista ya en el grupo Comunidad
-        // Buscamos si existe alguien con ese email o cédula que SEA 'estudiante', 'docente' o 'comunidad'
+        // Validaciones personalizadas de duplicados (Comunidad)
         $rolesComunidad = ['estudiante', 'docente', 'comunidad'];
+        
+        $existeEmail = User::where('email', $request->email)->whereIn('rol', $rolesComunidad)->exists();
+        if ($existeEmail) return response()->json(['message' => 'Este correo ya tiene una cuenta de comunidad.'], 422);
 
-        $existeEmail = User::where('email', $request->email)
-                           ->whereIn('rol', $rolesComunidad)
-                           ->exists();
+        $existeCedula = User::where('cedula', $request->cedula)->whereIn('rol', $rolesComunidad)->exists();
+        if ($existeCedula) return response()->json(['message' => 'Esta cédula ya tiene una cuenta de comunidad.'], 422);
 
-        if ($existeEmail) {
-            return response()->json(['message' => 'Este correo ya tiene una cuenta de comunidad.'], 422);
-        }
-
-        $existeCedula = User::where('cedula', $request->cedula)
-                            ->whereIn('rol', $rolesComunidad)
-                            ->exists();
-
-        if ($existeCedula) {
-            return response()->json(['message' => 'Esta cédula ya tiene una cuenta de comunidad.'], 422);
-        }
-
-        // 3. Crear el usuario con rol 'comunidad'
+        // Crear usuario
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'rol' => 'comunidad', // <--- AQUÍ ESTÁ EL CAMBIO (Antes decía 'estudiante')
+            'rol' => 'comunidad', 
             'cedula' => $request->cedula,
             'telefono' => $request->telefono
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // --- DISPARAR EVENTO DE REGISTRO (ENVÍA EL CORREO) ---
+        event(new Registered($user));
 
+        // --- YA NO DEVOLVEMOS EL TOKEN ---
         return response()->json([
-            'message' => 'Registro exitoso',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user
+            'message' => 'Registro exitoso. Se ha enviado un enlace de verificación a su correo.',
+            'require_verification' => true
         ]);
+    }
+
+    public function verify($id, Request $request)
+    {
+        $user = User::findOrFail($id);
+
+        if (!$request->hasValidSignature()) {
+            return response()->json(['message' => 'Enlace inválido o expirado.'], 401);
+        }
+
+        if (!$user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+        }
+
+        // Retornamos un HTML simple o redireccionamos a una web de "Éxito"
+        return response("<h1>Correo verificado exitosamente.</h1><p>Ahora puede iniciar sesión en la aplicación móvil.</p>");
     }
 
     // --- 3. CERRAR SESIÓN ---
@@ -177,4 +164,16 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'No se recibió ningún archivo'], 400);
     }
+    public function updateFcmToken(Request $request)
+{
+    $request->validate([
+        'fcm_token' => 'required|string',
+    ]);
+
+    $user = auth()->user();
+    $user->update(['fcm_token' => $request->fcm_token]);
+
+    return response()->json(['message' => 'Token FCM actualizado correctamente']);
+}
+
 }

@@ -33,9 +33,10 @@ class NoticiaController extends Controller
         $request->validate([
             'titulo' => 'required',
             'contenido' => 'required',
-            'tipo' => 'required' // noticia, protocolo, recomendacion
+            'tipo' => 'required' 
         ]);
 
+        // 1. Guardar en Base de Datos
         $id = DB::table('noticias')->insertGetId([
             'titulo' => $request->titulo,
             'contenido' => $request->contenido,
@@ -45,6 +46,29 @@ class NoticiaController extends Controller
             'updated_at' => now()
         ]);
 
-        return response()->json(['message' => 'Publicado', 'id' => $id]);
+        // 2. ENVIAR NOTIFICACIÓN PUSH
+        try {
+            // Obtener tokens de usuarios (que no sean nulos)
+            $tokens = User::whereNotNull('fcm_token')->pluck('fcm_token')->all();
+
+            if (!empty($tokens)) {
+                $messaging = app('firebase.messaging');
+                
+                $message = CloudMessage::new()
+                    ->withNotification(Notification::create(
+                        'Nueva Publicación: ' . $request->titulo, // Título
+                        substr($request->contenido, 0, 100) . '...' // Cuerpo (resumido)
+                    ));
+
+                // Enviar a todos los dispositivos encontrados
+                $messaging->sendMulticast($message, $tokens);
+            }
+        } catch (\Exception $e) {
+            // Si falla Firebase, no detenemos la respuesta, solo lo registramos en logs
+            \Log::error('Error enviando notificación FCM: ' . $e->getMessage());
+        }
+
+        return response()->json(['message' => 'Publicado y notificado', 'id' => $id]);
     }
+
 }
