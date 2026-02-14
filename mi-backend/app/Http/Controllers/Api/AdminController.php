@@ -5,112 +5,89 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash; // Importante para la seguridad de contraseñas
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log; // Importante para ver errores en el log
 use App\Models\User;
 use App\Models\PuntoMapa;
+// --- IMPORTACIONES NECESARIAS PARA NOTIFICACIONES ---
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
+use Kreait\Firebase\Messaging\AndroidConfig;
 
 class AdminController extends Controller
 {
     public function stats(Request $request)
     {
-        // 1. Contadores Generales (Tarjetas)
+        // 1. Contadores Generales
         $pendientes = DB::table('incidentes')->where('estado', 'pendiente')->count();
         $en_curso = DB::table('incidentes')->where('estado', 'en_curso')->count();
         $alertas = DB::table('alertas_panico')->count();
         $usuarios = DB::table('users')->count();
 
-        // 2. Gráfico de Dona (Tipos)
+        // 2. Gráfico de Dona
         $porTipo = DB::table('incidentes')
             ->select('tipo', DB::raw('count(*) as total'))
             ->groupBy('tipo')
             ->get();
 
-        // 3. LÓGICA DE TIEMPO "TRADING"
-        $periodo = $request->input('periodo', 'hora'); // Default: 24 horas
+        // 3. Lógica de Tiempo "Trading"
+        $periodo = $request->input('periodo', 'hora');
         $datosGrafico = collect([]);
 
         if ($periodo === 'minuto') {
-            // Últimos 60 minutos (Minuto a minuto)
             for ($i = 59; $i >= 0; $i--) {
                 $dt = now()->subMinutes($i);
                 $label = $dt->format('H:i');
-                
                 $inc = DB::table('incidentes')->whereBetween('created_at', [$dt->format('Y-m-d H:i:00'), $dt->format('Y-m-d H:i:59')])->count();
                 $alert = DB::table('alertas_panico')->whereBetween('created_at', [$dt->format('Y-m-d H:i:00'), $dt->format('Y-m-d H:i:59')])->count();
-                
                 $datosGrafico->push(['label' => $label, 'incidentes' => $inc, 'alertas' => $alert]);
             }
-
         } elseif ($periodo === 'hora') {
-            // Últimas 24 horas (Hora a hora)
             for ($i = 23; $i >= 0; $i--) {
                 $dt = now()->subHours($i);
                 $label = $dt->format('H:00');
-                
                 $inc = DB::table('incidentes')->whereBetween('created_at', [$dt->format('Y-m-d H:00:00'), $dt->format('Y-m-d H:59:59')])->count();
                 $alert = DB::table('alertas_panico')->whereBetween('created_at', [$dt->format('Y-m-d H:00:00'), $dt->format('Y-m-d H:59:59')])->count();
-                
                 $datosGrafico->push(['label' => $label, 'incidentes' => $inc, 'alertas' => $alert]);
             }
-
         } elseif ($periodo === 'dia') {
-            // Últimos 30 días (Día a día)
             for ($i = 29; $i >= 0; $i--) {
                 $dt = now()->subDays($i);
                 $label = $dt->format('d/m');
-                
                 $inc = DB::table('incidentes')->whereDate('created_at', $dt)->count();
                 $alert = DB::table('alertas_panico')->whereDate('created_at', $dt)->count();
-                
                 $datosGrafico->push(['label' => $label, 'incidentes' => $inc, 'alertas' => $alert]);
             }
-
         } elseif ($periodo === 'semanal') {
-            // Últimas 12 semanas
             for ($i = 11; $i >= 0; $i--) {
                 $dt = now()->subWeeks($i);
                 $start = $dt->copy()->startOfWeek();
                 $end = $dt->copy()->endOfWeek();
                 $label = 'Sem ' . $dt->weekOfYear;
-                
                 $inc = DB::table('incidentes')->whereBetween('created_at', [$start, $end])->count();
                 $alert = DB::table('alertas_panico')->whereBetween('created_at', [$start, $end])->count();
-                
                 $datosGrafico->push(['label' => $label, 'incidentes' => $inc, 'alertas' => $alert]);
             }
-
         } elseif ($periodo === 'mensual') {
-            // Últimos 12 meses
             for ($i = 11; $i >= 0; $i--) {
                 $dt = now()->subMonths($i);
                 $label = $dt->format('M Y');
-                
                 $inc = DB::table('incidentes')->whereYear('created_at', $dt->year)->whereMonth('created_at', $dt->month)->count();
                 $alert = DB::table('alertas_panico')->whereYear('created_at', $dt->year)->whereMonth('created_at', $dt->month)->count();
-                
                 $datosGrafico->push(['label' => $label, 'incidentes' => $inc, 'alertas' => $alert]);
             }
-
         } elseif ($periodo === 'anual') {
-            // Últimos 5 años
             for ($i = 4; $i >= 0; $i--) {
                 $dt = now()->subYears($i);
                 $label = $dt->format('Y');
-                
                 $inc = DB::table('incidentes')->whereYear('created_at', $dt->year)->count();
                 $alert = DB::table('alertas_panico')->whereYear('created_at', $dt->year)->count();
-                
                 $datosGrafico->push(['label' => $label, 'incidentes' => $inc, 'alertas' => $alert]);
             }
         }
 
         return response()->json([
-            'tarjetas' => [
-                'pendientes' => $pendientes,
-                'en_curso' => $en_curso,
-                'alertas_total' => $alertas,
-                'usuarios' => $usuarios
-            ],
+            'tarjetas' => ['pendientes' => $pendientes, 'en_curso' => $en_curso, 'alertas_total' => $alertas, 'usuarios' => $usuarios],
             'grafico_tipos' => $porTipo,
             'grafico_lineal' => $datosGrafico
         ]);
@@ -119,18 +96,12 @@ class AdminController extends Controller
     public function incidentes()
     {
         try {
-            // CONSULTA SEGURA
             $incidentes = DB::table('incidentes')
                 ->join('users', 'incidentes.user_id', '=', 'users.id')
-                ->select(
-                    'incidentes.*', // Datos del reporte
-                    'users.name as estudiante_nombre', // Nombre del alumno
-                    'users.email as estudiante_email'  // Email
-                )
-                ->orderBy('incidentes.created_at', 'desc') 
+                ->select('incidentes.*', 'users.name as estudiante_nombre', 'users.email as estudiante_email')
+                ->orderBy('incidentes.created_at', 'desc')
                 ->get();
 
-            // Procesar las fotos
             $incidentes->transform(function ($incidente) {
                 if ($incidente->foto_path) {
                     $incidente->foto_path = asset('storage/' . $incidente->foto_path);
@@ -139,12 +110,8 @@ class AdminController extends Controller
             });
 
             return response()->json($incidentes);
-
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Error en base de datos',
-                'detalle' => $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Error BD', 'detalle' => $e->getMessage()], 500);
         }
     }
 
@@ -181,7 +148,6 @@ class AdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // --- TRANSFORMACIÓN DE IMÁGENES ---
         $noticias->transform(function ($item) {
             if ($item->imagen_url) {
                 $item->imagen_url = asset('storage/' . $item->imagen_url);
@@ -192,40 +158,73 @@ class AdminController extends Controller
         return response()->json($noticias);
     }
 
+    // --- FUNCIÓN PRINCIPAL CORREGIDA PARA ENVIAR NOTIFICACIÓN ---
     public function crearNoticia(Request $request)
     {
-        // Validar y subir imagen si existe
+        // 1. Validar y subir imagen
         $path = null;
         if ($request->hasFile('imagen')) {
             $path = $request->file('imagen')->store('noticias', 'public');
         }
 
-        DB::table('noticias')->insert([
+        // 2. Guardar en Base de Datos y obtener el ID
+        $id = DB::table('noticias')->insertGetId([
             'titulo' => $request->titulo,
             'contenido' => $request->contenido,
-            'tipo' => $request->tipo, // noticia, protocolo, recomendacion
+            'tipo' => $request->tipo,
             'imagen_url' => $path,
             'publicado' => true,
-            'created_by' => auth()->id(), // El director logueado
+            'created_by' => auth()->id(),
             'created_at' => now(),
             'updated_at' => now()
         ]);
 
-        return response()->json(['message' => 'Publicación exitosa']);
+        // 3. ENVIAR NOTIFICACIÓN PUSH A LA APP
+        try {
+            // Obtenemos todos los tokens registrados en la app
+            $tokens = User::whereNotNull('fcm_token')->pluck('fcm_token')->all();
+
+            if (!empty($tokens)) {
+                $messaging = app('firebase.messaging');
+                
+                // Limpiamos el contenido HTML para que se vea bien en la notificación
+                $contenidoPlano = strip_tags($request->contenido);
+                
+                $message = CloudMessage::new()
+                    ->withNotification(Notification::create(
+                        'Nueva Publicación: ' . $request->titulo,
+                        substr($contenidoPlano, 0, 100) . '...'
+                    ))
+                    // Configuración vital para que Android muestre la alerta
+                    ->withAndroidConfig(AndroidConfig::fromArray([
+                        'notification' => [
+                            'channel_id' => 'seguridad_ueb_channel', // Debe coincidir con MainActivity.kt
+                            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                            'sound' => 'default',
+                            'priority' => 'high',
+                        ],
+                    ]));
+
+                $messaging->sendMulticast($message, $tokens);
+                Log::info("Notificación enviada a " . count($tokens) . " usuarios.");
+            }
+        } catch (\Exception $e) {
+            // Si falla Firebase, registramos el error pero no detenemos la respuesta
+            Log::error('Error enviando notificación desde AdminController: ' . $e->getMessage());
+        }
+
+        return response()->json(['message' => 'Publicación exitosa y notificada']);
     }
 
-    // --- ACTUALIZAR NOTICIA ---
     public function actualizarNoticia(Request $request, $id)
     {
-        // 1. Validar
         $request->validate([
             'titulo' => 'required|string',
             'contenido' => 'required|string',
             'tipo' => 'required|string',
-            'imagen' => 'nullable|image|max:5120' // Máx 5MB
+            'imagen' => 'nullable|image|max:5120'
         ]);
 
-        // 2. Buscar la noticia
         $noticia = DB::table('noticias')->where('id', $id)->first();
 
         if (!$noticia) {
@@ -239,19 +238,16 @@ class AdminController extends Controller
             'updated_at' => now()
         ];
 
-        // 3. Si subió nueva imagen
         if ($request->hasFile('imagen')) {
             $path = $request->file('imagen')->store('noticias', 'public');
             $datosActualizar['imagen_url'] = $path;
         }
 
-        // 4. Actualizar en BD
         DB::table('noticias')->where('id', $id)->update($datosActualizar);
 
         return response()->json(['message' => 'Noticia actualizada']);
     }
 
-    // --- ELIMINAR NOTICIA ---
     public function borrarNoticia($id)
     {
         DB::table('noticias')->where('id', $id)->delete();
@@ -260,67 +256,52 @@ class AdminController extends Controller
 
     // --- GESTIÓN DE USUARIOS ---
 
-    // 1. LISTAR ADMINISTRATIVOS (Director y Administrador)
     public function index()
     {
         $usuarios = User::whereIn('rol', ['director', 'administrador'])
-                        ->orderBy('created_at', 'desc')
-                        ->get();
+            ->orderBy('created_at', 'desc')
+            ->get();
         return response()->json($usuarios);
     }
 
-    // 2. LISTAR COMUNIDAD (Usuarios de la App - Rol 'comunidad')
     public function comunidad()
     {
-        // CORRECCIÓN: Usamos whereIn para incluir todos los roles de la App móvil
         $usuarios = User::whereIn('rol', ['estudiante', 'docente', 'comunidad'])
-                        ->orderBy('created_at', 'desc')
-                        ->get();
-        
+            ->orderBy('created_at', 'desc')
+            ->get();
         return response()->json($usuarios);
     }
 
-    // Crear nuevo usuario (Solo administrativos)
     public function storeUsuario(Request $request)
     {
-        // 1. Validaciones de formato básico
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email',
             'password' => 'required|min:6',
-            'rol' => 'required|in:administrador,director,estudiante,docente', // Ajusta según tus roles reales
+            'rol' => 'required|in:administrador,director,estudiante,docente',
             'cedula' => 'required|string|min:10',
             'telefono' => 'nullable|string'
         ]);
 
-        // 2. Definir los Grupos
         $rolesAdministrativos = ['director', 'administrador'];
-        
-        // ¿El usuario que intentamos crear es Admin?
         $esNuevoAdmin = in_array($request->rol, $rolesAdministrativos);
 
-        // 3. VALIDACIÓN DE DUPLICADOS (Lógica por Grupos)
-        
-        // A) Validar CÉDULA
+        // Validar Cédula
         $existeCedulaEnSuGrupo = User::where('cedula', $request->cedula)
             ->where(function ($query) use ($esNuevoAdmin, $rolesAdministrativos) {
                 if ($esNuevoAdmin) {
-                    // Si creo un Admin, busco si YA existe otro Admin con esa cédula
                     $query->whereIn('rol', $rolesAdministrativos);
                 } else {
-                    // Si creo un Comunidad, busco si YA existe otro Comunidad con esa cédula
                     $query->whereNotIn('rol', $rolesAdministrativos);
                 }
             })->exists();
 
         if ($existeCedulaEnSuGrupo) {
             $grupo = $esNuevoAdmin ? "Administrativo" : "Comunidad";
-            return response()->json([
-                'message' => "La cédula ya existe registrada en el grupo de $grupo."
-            ], 422);
+            return response()->json(['message' => "La cédula ya existe registrada en el grupo de $grupo."], 422);
         }
 
-        // B) Validar CORREO (Misma lógica: se permite repetir SOLO si es entre Admin y Comunidad)
+        // Validar Email
         $existeEmailEnSuGrupo = User::where('email', $request->email)
             ->where(function ($query) use ($esNuevoAdmin, $rolesAdministrativos) {
                 if ($esNuevoAdmin) {
@@ -332,12 +313,9 @@ class AdminController extends Controller
 
         if ($existeEmailEnSuGrupo) {
             $grupo = $esNuevoAdmin ? "Administrativo" : "Comunidad";
-            return response()->json([
-                'message' => "El correo ya está en uso por otro usuario de $grupo."
-            ], 422);
+            return response()->json(['message' => "El correo ya está en uso por otro usuario de $grupo."], 422);
         }
 
-        // 4. Crear el Usuario
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -350,7 +328,6 @@ class AdminController extends Controller
         return response()->json(['message' => 'Usuario creado exitosamente', 'user' => $user]);
     }
 
-    // Actualizar usuario
     public function updateUsuario(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -362,13 +339,11 @@ class AdminController extends Controller
             'rol' => 'required'
         ]);
 
-        // Grupos
         $rolesAdministrativos = ['director', 'administrador'];
-        $esAdminEditado = in_array($request->rol, $rolesAdministrativos); // Usamos el rol que viene en el request
+        $esAdminEditado = in_array($request->rol, $rolesAdministrativos);
 
-        // 1. Validar Cédula (Excluyendo al propio usuario)
         $existeCedula = User::where('cedula', $request->cedula)
-            ->where('id', '!=', $id) // Ignorar este usuario
+            ->where('id', '!=', $id)
             ->where(function ($query) use ($esAdminEditado, $rolesAdministrativos) {
                 if ($esAdminEditado) {
                     $query->whereIn('rol', $rolesAdministrativos);
@@ -381,7 +356,6 @@ class AdminController extends Controller
             return response()->json(['message' => 'La cédula ya existe en otro usuario de este grupo.'], 422);
         }
 
-        // 2. Validar Email (Excluyendo al propio usuario)
         $existeEmail = User::where('email', $request->email)
             ->where('id', '!=', $id)
             ->where(function ($query) use ($esAdminEditado, $rolesAdministrativos) {
@@ -396,7 +370,6 @@ class AdminController extends Controller
             return response()->json(['message' => 'El correo ya existe en otro usuario de este grupo.'], 422);
         }
 
-        // 3. Actualizar
         $data = $request->only(['name', 'email', 'rol', 'cedula', 'telefono']);
         
         if ($request->filled('password')) {
@@ -408,13 +381,11 @@ class AdminController extends Controller
         return response()->json(['message' => 'Usuario actualizado correctamente']);
     }
 
-    // Eliminar usuario
     public function destroyUsuario($id)
     {
         if (auth()->id() == $id) {
             return response()->json(['error' => 'No puedes eliminar tu propia cuenta'], 400);
         }
-        
         User::destroy($id);
         return response()->json(['message' => 'Usuario eliminado']);
     }
@@ -423,8 +394,7 @@ class AdminController extends Controller
     public function listarPuntos()
     {
         try {
-            $puntos = PuntoMapa::all();
-            return response()->json($puntos);
+            return response()->json(PuntoMapa::all());
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
