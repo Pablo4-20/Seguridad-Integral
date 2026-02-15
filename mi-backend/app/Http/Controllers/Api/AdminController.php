@@ -197,13 +197,13 @@ class AdminController extends Controller
                     ))
                     // Configuración vital para que Android muestre la alerta
                     ->withAndroidConfig(AndroidConfig::fromArray([
-                        'notification' => [
-                            'channel_id' => 'seguridad_ueb_channel', // Debe coincidir con MainActivity.kt
-                            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                            'sound' => 'default',
-                            'priority' => 'high',
-                        ],
-                    ]));
+    'priority' => 'high', // Prioridad alta para que despierte el teléfono
+    'notification' => [
+        'channel_id' => 'seguridad_ueb_channel',
+        'sound' => 'default',
+        // 'click_action' ELIMINADO: Android abrirá la actividad por defecto (MainActivity)
+    ],
+]));
 
                 $messaging->sendMulticast($message, $tokens);
                 Log::info("Notificación enviada a " . count($tokens) . " usuarios.");
