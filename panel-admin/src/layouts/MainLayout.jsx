@@ -38,6 +38,28 @@ export default function MainLayout() {
     const prevIncidentCount = useRef(0); 
     const audioRef = useRef(null);
 
+    // --- NUEVO: INTERCEPTOR DEL BOTÓN ATRÁS ---
+    useEffect(() => {
+        // Solo activamos la protección si estamos en el dashboard (o la ruta raíz del layout)
+        if (location.pathname === '/dashboard') {
+            // 1. Agregamos un estado al historial para crear un "colchón"
+            window.history.pushState(null, document.title, window.location.href);
+
+            const handlePopState = (event) => {
+                // 2. Cuando el usuario da atrás, evitamos que salga volviendo a empujar el estado
+                window.history.pushState(null, document.title, window.location.href);
+                // 3. Mostramos el modal de logout
+                setIsLogoutModalOpen(true);
+            };
+
+            window.addEventListener('popstate', handlePopState);
+
+            return () => {
+                window.removeEventListener('popstate', handlePopState);
+            };
+        }
+    }, [location.pathname]);
+
     useEffect(() => {
         audioRef.current = new Audio('/alert.mp3');
     }, []);
@@ -111,8 +133,6 @@ export default function MainLayout() {
         setIsLogoutModalOpen(false);
     };
 
-    // --- LÓGICA DE ESTILOS DE LINKS ---
-    // isUsersRoute es true si estamos en /usuarios/administrativos O /usuarios/comunidad
     const isUsersRoute = location.pathname.includes('/usuarios');
 
     const linkClass = (path, isActiveOverride = false) => `
@@ -122,6 +142,9 @@ export default function MainLayout() {
             : "text-slate-600 hover:bg-slate-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"}
         ${collapsed ? "justify-center" : ""}
     `;
+
+    // Roles permitidos para ver el menú de usuarios
+    const canViewUsers = ['director', 'admin', 'administrador'].includes(user.rol);
 
     return (
         <div className="flex h-screen bg-slate-100 dark:bg-slate-900 transition-colors duration-300 relative overflow-hidden">
@@ -210,12 +233,11 @@ export default function MainLayout() {
                         {!collapsed && <span className="font-medium">Comunicación</span>}
                     </Link>
 
-                    {/* SECCIÓN USUARIOS - UNIFICADA */}
-                    {user.rol === 'director' && (
+                    {/* SECCIÓN USUARIOS - Corregida para ver si es Director O Admin */}
+                    {canViewUsers && (
                         <>
                             {!collapsed && <div className="px-4 mt-4 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Administración</div>}
                             
-                            {/* UN SOLO BOTÓN QUE LLEVA A LA VISTA POR DEFECTO (Administrativos) */}
                             <Link 
                                 to="/usuarios/administrativos" 
                                 className={linkClass('/usuarios/administrativos', isUsersRoute)} 

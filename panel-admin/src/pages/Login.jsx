@@ -31,7 +31,8 @@ export default function Login() {
             const rol = response.data.user.rol;
             
             // Doble verificación (Frontend + Backend)
-            if (rol !== 'admin' && rol !== 'director') {
+            // Acepta: 'admin', 'administrador' y 'director'
+            if (rol !== 'admin' && rol !== 'administrador' && rol !== 'director') {
                 setError('Acceso denegado: No tienes permisos administrativos.');
                 setLoading(false);
                 return;
@@ -39,7 +40,9 @@ export default function Login() {
 
             localStorage.setItem('token', response.data.access_token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            navigate('/dashboard');
+            
+            // Redirección usando replace: true para reemplazar el historial
+            navigate('/dashboard', { replace: true });
 
         } catch (err) {
             // Manejo de errores específicos del backend

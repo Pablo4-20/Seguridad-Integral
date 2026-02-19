@@ -41,12 +41,42 @@ class DatabaseSeeder extends Seeder
 
         // 3. USUARIO DE COMUNIDAD (Para entrar a la App Móvil)
         User::create([
-            'name' => 'Estudiante Prueba',
-            'email' => 'estudiante@ueb.edu.ec',
+            'name' => 'Pablo Holguin',
+            'email' => 'pablo.holguin@ueb.edu.ec',
             'password' => Hash::make('123456'), // Contraseña conocida
             'rol' => 'comunidad',             // <--- ESTO ES LO QUE FALTABA
-            'cedula' => '0505050505',
+            'cedula' => '1752504926',
+            'telefono' => '0980791149',
+            'email_verified_at' => now(),
+        ]);
+
+        User::create([
+            'name' => 'Kelvin Holguin',
+            'email' => 'kelvin.holguin@ueb.edu.ec',
+            'password' => Hash::make('123456'), // Contraseña conocida
+            'rol' => 'comunidad',             // <--- ESTO ES LO QUE FALTABA
+            'cedula' => '1752504801',
             'telefono' => '0995555555',
+            'email_verified_at' => now(),
+        ]);
+
+        User::create([
+            'name' => 'Katia Torres',
+            'email' => 'katia.torres@ueb.edu.ec',
+            'password' => Hash::make('123456'), // Contraseña conocida
+            'rol' => 'comunidad',             // <--- ESTO ES LO QUE FALTABA
+            'cedula' => '1752504802',
+            'telefono' => '0996666666',
+            'email_verified_at' => now(),
+        ]);
+
+        User::create([
+            'name' => 'Nataly Silva',
+            'email' => 'nataly.silva@ueb.edu.ec',
+            'password' => Hash::make('123456'), // Contraseña conocida
+            'rol' => 'comunidad',             // <--- ESTO ES LO QUE FALTABA
+            'cedula' => '1752504803',
+            'telefono' => '0997777777',
             'email_verified_at' => now(),
         ]);
     }
