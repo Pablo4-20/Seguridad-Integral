@@ -8,7 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail; // Importación correcta
 
-// 1. AQUÍ ESTABA EL ERROR: Faltaba "implements MustVerifyEmail"
+// Faltaba "implements MustVerifyEmail"
 class User extends Authenticatable implements MustVerifyEmail 
 {
     use HasApiTokens, HasFactory, Notifiable;
