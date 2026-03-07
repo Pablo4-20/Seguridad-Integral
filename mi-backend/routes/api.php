@@ -133,3 +133,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/mapa', [AdminController::class, 'guardarPunto']);
     Route::delete('/admin/mapa/{id}', [AdminController::class, 'borrarPunto']);
 });
+
+Route::get('/imagen-incidente/{archivo}', function ($archivo) {
+    $ruta = storage_path('app/public/incidentes/' . $archivo);
+    
+    if (!file_exists($ruta)) {
+        return response()->json(['error' => 'Imagen no encontrada'], 404);
+    }
+
+    return response()->file($ruta);
+});
+
+Route::get('/imagen-noticia/{archivo}', function ($archivo) {
+    $ruta = storage_path('app/public/noticias/' . $archivo);
+    
+    if (!file_exists($ruta)) {
+        return response()->json(['error' => 'Imagen no encontrada'], 404);
+    }
+
+    return response()->file($ruta);
+});

@@ -104,7 +104,7 @@ class AdminController extends Controller
 
             $incidentes->transform(function ($incidente) {
                 if ($incidente->foto_path) {
-                    $incidente->foto_path = asset('storage/' . $incidente->foto_path);
+                    $incidente->foto_path = url('api/imagen-incidente/' . basename($incidente->foto_path));
                 }
                 return $incidente;
             });
@@ -150,7 +150,7 @@ class AdminController extends Controller
 
         $noticias->transform(function ($item) {
             if ($item->imagen_url) {
-                $item->imagen_url = asset('storage/' . $item->imagen_url);
+                $item->imagen_url = url('api/imagen-noticia/' . basename($item->imagen_url));
             }
             return $item;
         });

@@ -55,6 +55,13 @@ class IncidenteController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+         $misReportes->transform(function ($incidente) {
+            if ($incidente->foto_path) {
+                $incidente->foto_path = url('api/imagen-incidente/' . basename($incidente->foto_path));
+            }
+            return $incidente;
+        });   
+
         return response()->json($misReportes);
     }
 }

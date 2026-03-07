@@ -23,7 +23,7 @@ class NoticiaController extends Controller
 
         $noticias->transform(function ($noticia) {
             if ($noticia->imagen_url) {
-                $noticia->imagen_url = asset('storage/' . $noticia->imagen_url);
+                $noticia->imagen_url = url('api/imagen-noticia/' . basename($noticia->imagen_url));
             }
             return $noticia;
         });
@@ -95,7 +95,7 @@ class NoticiaController extends Controller
 
     // Ajustar url de imagen si existe
     if ($noticia->imagen_url) {
-        $noticia->imagen_url = asset('storage/' . $noticia->imagen_url);
+        $noticia->imagen_url = url('api/imagen-noticia/' . basename($noticia->imagen_url));
     }
 
     return response()->json($noticia);
