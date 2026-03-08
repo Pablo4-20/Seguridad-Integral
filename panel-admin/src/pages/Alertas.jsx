@@ -190,7 +190,7 @@ export default function Alertas() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <a 
-                                        href={`https://www.google.com/maps/search/?api=1&query=${item.latitud},${item.longitud}`}
+                                        href={`https://www.openstreetmap.org/?mlat=${item.latitud}&mlon=${item.longitud}#map=17/${item.latitud}/${item.longitud}`}
                                         target="_blank" 
                                         rel="noreferrer"
                                         className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition shadow-sm"

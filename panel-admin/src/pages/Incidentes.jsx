@@ -309,9 +309,9 @@ export default function Incidentes() {
                                         </div>
                                     </div>
 
-                                    <a href={`https://www.google.com/maps/search/?api=1&query=${incidenteSeleccionado.latitud},${incidenteSeleccionado.longitud}`} target="_blank" rel="noreferrer" className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
-                                        📍 Ver Ubicación en Google Maps
-                                    </a>
+                                    <a href={`https://www.openstreetmap.org/?mlat=${incidenteSeleccionado.latitud}&mlon=${incidenteSeleccionado.longitud}#map=17/${incidenteSeleccionado.latitud}/${incidenteSeleccionado.longitud}`} target="_blank" rel="noreferrer" className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+    📍 Ver Ubicación en OpenStreetMap
+</a>
                                 </div>
                             </div>
                         </div>
