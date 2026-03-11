@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // --- ICONOS ---
 const IconSearch = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>;
@@ -10,6 +12,7 @@ const IconError = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" view
 const IconWarning = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-orange-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>;
 const IconEye = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>;
 const IconClose = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>;
+const IconPDF = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>;
 
 export default function Incidentes() {
     const [incidentes, setIncidentes] = useState([]);
@@ -85,6 +88,77 @@ export default function Incidentes() {
         return coincideTexto && coincideEstado && coincideTipo && coincideFecha;
     });
 
+    // --- EXPORTAR A PDF CON FIRMAS ---
+    const exportarPDF = () => {
+        const doc = new jsPDF();
+        
+        // Título del documento (Color Azul)
+        doc.setFontSize(18);
+        doc.setTextColor(30, 58, 138); // blue-900 aproximado
+        doc.text("Reporte General de Incidentes", 14, 22);
+        
+        // Información de filtros
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Fecha de exportación: ${new Date().toLocaleDateString()}`, 14, 30);
+        doc.text(`Total de registros: ${incidentesFiltrados.length}`, 14, 35);
+        
+        let yFiltros = 40;
+        if (filtroFecha) { doc.text(`Filtro de Fecha: ${filtroFecha}`, 14, yFiltros); yFiltros += 5; }
+        if (filtroEstado !== 'todos') { doc.text(`Filtro de Estado: ${filtroEstado.toUpperCase()}`, 14, yFiltros); yFiltros += 5; }
+        if (filtroTipo !== 'todos') { doc.text(`Filtro de Tipo: ${filtroTipo.toUpperCase()}`, 14, yFiltros); yFiltros += 5; }
+
+        // Definir columnas y filas
+        const tableColumn = ["Estudiante", "Tipo de Incidente", "Fecha y Hora", "Estado"];
+        const tableRows = [];
+
+        incidentesFiltrados.forEach(incidente => {
+            const rowData = [
+                incidente.estudiante_nombre,
+                incidente.tipo,
+                new Date(incidente.created_at).toLocaleString(),
+                incidente.estado.replace('_', ' ').toUpperCase()
+            ];
+            tableRows.push(rowData);
+        });
+
+        // Generar tabla
+        autoTable(doc, {
+            startY: yFiltros + 2,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'grid',
+            headStyles: { fillColor: [37, 99, 235] }, // Fondo azul oscuro (blue-600)
+            styles: { fontSize: 9 },
+            alternateRowStyles: { fillColor: [239, 246, 255] } // Filas alternas azul claro (blue-50)
+        });
+
+        // --- SECCIÓN DE FIRMA ---
+        let finalY = doc.lastAutoTable.finalY || yFiltros + 5; 
+
+        if (finalY > 240) {
+            doc.addPage();
+            finalY = 20; 
+        }
+
+        const firmaY = finalY + 40;
+
+        doc.setDrawColor(0, 0, 0); 
+        doc.setLineWidth(0.5);
+        doc.line(70, firmaY, 140, firmaY); 
+
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0); 
+        doc.text("Firma del Responsable", 105, firmaY + 6, { align: "center" });
+
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100); 
+        doc.text("Unidad de Gestión de Riesgos", 105, firmaY + 11, { align: "center" });
+
+        // Guardar el PDF
+        doc.save(`Reporte_Incidentes_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
     if (loading && incidentes.length === 0) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ueb-blue"></div></div>;
 
     return (
@@ -103,6 +177,7 @@ export default function Incidentes() {
                 </div>
             )}
 
+            {/* ENCABEZADO Y BOTONES */}
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-3xl font-bold text-ueb-blue">Gestión de Incidentes</h1>
@@ -114,8 +189,21 @@ export default function Incidentes() {
                         <p className="text-gray-500 text-xs font-bold">Actualización en tiempo real</p>
                     </div>
                 </div>
-                <div className="bg-blue-50 text-blue-800 px-4 py-2 rounded-lg font-bold text-sm border border-blue-200">
-                    Total: {incidentesFiltrados.length} Reportes
+                <div className="flex items-center gap-3">
+                    {/* BOTÓN EXPORTAR PDF */}
+                    <button 
+                        onClick={exportarPDF}
+                        disabled={incidentesFiltrados.length === 0}
+                        className="flex items-center gap-2 bg-white text-blue-700 px-4 py-2 rounded-lg font-bold text-sm border border-blue-200 hover:bg-blue-50 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Exportar incidentes actuales a PDF"
+                    >
+                        <IconPDF />
+                        Exportar PDF
+                    </button>
+                    {/* CONTADOR */}
+                    <div className="bg-blue-50 text-blue-800 px-4 py-2 rounded-lg font-bold text-sm border border-blue-200 shadow-sm">
+                        Total: {incidentesFiltrados.length} Reportes
+                    </div>
                 </div>
             </div>
 
@@ -241,7 +329,7 @@ export default function Incidentes() {
                 </div>
             )}
 
-            {/* --- MODAL DETALLE (CON CORRECCIÓN DE TEXTO) --- */}
+            {/* --- MODAL DETALLE CON MAPA --- */}
             {isDetailModalOpen && incidenteSeleccionado && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-fade-in">
                     <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -303,15 +391,32 @@ export default function Incidentes() {
 
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Descripción Detallada</h4>
-                                        {/* --- CORRECCIÓN APLICADA AQUÍ: break-words --- */}
                                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-gray-700 text-sm leading-relaxed whitespace-pre-wrap break-words max-h-60 overflow-y-auto">
                                             {incidenteSeleccionado.descripcion}
                                         </div>
                                     </div>
 
+                                    {/* SECCIÓN: MAPA INCRUSTADO */}
+                                    <div>
+                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Ubicación del Incidente</h4>
+                                        <div className="w-full h-64 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative">
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                frameBorder="0"
+                                                scrolling="no"
+                                                marginHeight="0"
+                                                marginWidth="0"
+                                                src={`https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(incidenteSeleccionado.longitud) - 0.005}%2C${parseFloat(incidenteSeleccionado.latitud) - 0.005}%2C${parseFloat(incidenteSeleccionado.longitud) + 0.005}%2C${parseFloat(incidenteSeleccionado.latitud) + 0.005}&layer=mapnik&marker=${incidenteSeleccionado.latitud}%2C${incidenteSeleccionado.longitud}`}
+                                                className="absolute inset-0"
+                                            ></iframe>
+                                        </div>
+                                    </div>
+
+                                    {/* Botón debajo del mapa */}
                                     <a href={`https://www.openstreetmap.org/?mlat=${incidenteSeleccionado.latitud}&mlon=${incidenteSeleccionado.longitud}#map=17/${incidenteSeleccionado.latitud}/${incidenteSeleccionado.longitud}`} target="_blank" rel="noreferrer" className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
-    📍 Ver Ubicación en OpenStreetMap
-</a>
+                                        📍 Ver pantalla completa en OpenStreetMap
+                                    </a>
                                 </div>
                             </div>
                         </div>

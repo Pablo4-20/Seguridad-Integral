@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // --- ICONOS ---
 const IconSearch = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>;
@@ -8,6 +10,8 @@ const IconCalendar = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" v
 const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>;
 const IconError = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>;
 const IconWarning = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-orange-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>;
+const IconClose = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>;
+const IconPDF = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>;
 
 export default function Alertas() {
     const [alertas, setAlertas] = useState([]);
@@ -23,10 +27,20 @@ export default function Alertas() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [alertaSeleccionada, setAlertaSeleccionada] = useState(null);
 
+    // ESTADOS PARA MODAL DE MAPA
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+    const [alertaMapaSeleccionada, setAlertaMapaSeleccionada] = useState(null);
+
     // Función para mostrar notificación
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
         setTimeout(() => setToast({ ...toast, show: false }), 3000);
+    };
+
+    // Función para abrir el mapa
+    const verMapa = (alerta) => {
+        setAlertaMapaSeleccionada(alerta);
+        setIsMapModalOpen(true);
     };
 
     // Cargar datos
@@ -79,6 +93,85 @@ export default function Alertas() {
         return coincideTexto && coincideFecha && coincideEstado;
     });
 
+    // --- EXPORTAR A PDF CON FIRMAS ---
+    const exportarPDF = () => {
+        const doc = new jsPDF();
+        
+        // Título del documento
+        doc.setFontSize(18);
+        doc.setTextColor(185, 28, 28); // Rojo
+        doc.text("Reporte de Monitoreo de Pánico", 14, 22);
+        
+        // Información de filtros
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Fecha de exportación: ${new Date().toLocaleDateString()}`, 14, 30);
+        doc.text(`Total de registros: ${alertasFiltradas.length}`, 14, 35);
+        
+        if (filtroFecha) doc.text(`Filtro de Fecha: ${filtroFecha}`, 14, 40);
+        if (filtroEstado !== 'todos') doc.text(`Filtro de Estado: ${filtroEstado.toUpperCase()}`, 14, filtroFecha ? 45 : 40);
+
+        // Definir columnas y filas
+        const tableColumn = ["Estudiante", "Cédula", "Teléfono", "Fecha y Hora", "Estado"];
+        const tableRows = [];
+
+        alertasFiltradas.forEach(alerta => {
+            const rowData = [
+                alerta.estudiante_nombre,
+                alerta.cedula || 'N/A',
+                alerta.telefono || 'N/A',
+                new Date(alerta.created_at).toLocaleString(),
+                alerta.atendida ? 'ATENDIDA' : 'PENDIENTE'
+            ];
+            tableRows.push(rowData);
+        });
+
+        // Generar tabla
+        autoTable(doc, {
+            startY: 50,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'grid',
+            headStyles: { fillColor: [185, 28, 28] }, // Fondo rojo
+            styles: { fontSize: 9 },
+            alternateRowStyles: { fillColor: [254, 242, 242] } // Filas alternas
+        });
+
+        // --- SECCIÓN DE FIRMA ---
+        // Obtenemos en qué posición vertical (Y) terminó de dibujarse la tabla
+        let finalY = doc.lastAutoTable.finalY || 50; 
+
+        // Verificamos si hay suficiente espacio para la firma en la página actual. 
+        // Si no hay (porque la tabla terminó muy abajo), agregamos una nueva página.
+        if (finalY > 240) {
+            doc.addPage();
+            finalY = 20; // Reseteamos la posición Y para la nueva página
+        }
+
+        // Dibujamos la línea y el texto de la firma un poco más abajo del final de la tabla
+        const firmaY = finalY + 40;
+
+        doc.setDrawColor(0, 0, 0); // Color de línea negro
+        doc.setLineWidth(0.5);
+        
+        // Línea para la firma (centrada)
+        // doc.line(x1, y1, x2, y2) -> x va de 0 a 210 en A4 vertical. Centro es ~105
+        doc.line(70, firmaY, 140, firmaY); 
+
+        // Texto debajo de la firma
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0); // Texto negro
+        doc.text("Firma del Responsable", 105, firmaY + 6, { align: "center" });
+
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100); // Gris sutil
+        doc.text("Unidad de Gestión de Riesgos", 105, firmaY + 11, { align: "center" });
+        // -----------------------
+
+        // Guardar el PDF
+        doc.save(`Reporte_Alertas_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
     if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-700"></div></div>;
 
     return (
@@ -99,13 +192,27 @@ export default function Alertas() {
                 </div>
             )}
 
+            {/* ENCABEZADO Y BOTONES SUPERIORES */}
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-3xl font-bold text-red-700">🚨 Monitoreo de Pánico</h1>
                     <p className="text-gray-500 mt-1">Gestión de emergencias en tiempo real.</p>
                 </div>
-                <div className="bg-red-50 text-red-800 px-4 py-2 rounded-lg font-bold text-sm border border-red-200">
-                    Total: {alertasFiltradas.length} Alertas
+                <div className="flex items-center gap-3">
+                    {/* BOTÓN EXPORTAR PDF */}
+                    <button 
+                        onClick={exportarPDF}
+                        disabled={alertasFiltradas.length === 0}
+                        className="flex items-center gap-2 bg-white text-red-700 px-4 py-2 rounded-lg font-bold text-sm border border-red-200 hover:bg-red-50 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Exportar alertas actuales a PDF"
+                    >
+                        <IconPDF />
+                        Exportar PDF
+                    </button>
+                    {/* CONTADOR */}
+                    <div className="bg-red-50 text-red-800 px-4 py-2 rounded-lg font-bold text-sm border border-red-200 shadow-sm">
+                        Total: {alertasFiltradas.length} Alertas
+                    </div>
                 </div>
             </div>
 
@@ -189,14 +296,12 @@ export default function Alertas() {
                                     {new Date(item.created_at).toLocaleString()}
                                 </td>
                                 <td className="px-6 py-4">
-                                    <a 
-                                        href={`https://www.openstreetmap.org/?mlat=${item.latitud}&mlon=${item.longitud}#map=17/${item.latitud}/${item.longitud}`}
-                                        target="_blank" 
-                                        rel="noreferrer"
+                                    <button 
+                                        onClick={() => verMapa(item)}
                                         className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition shadow-sm"
                                     >
                                         <span>📍</span> Ver Mapa
-                                    </a>
+                                    </button>
                                 </td>
                                 <td className="px-6 py-4 text-center">
                                     {item.atendida ? (
@@ -265,6 +370,57 @@ export default function Alertas() {
                     </div>
                 </div>
             )}
+
+            {/* --- MODAL DE MAPA --- */}
+            {isMapModalOpen && alertaMapaSeleccionada && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+                        
+                        {/* Cabecera del modal */}
+                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <div>
+                                <h2 className="text-xl font-extrabold text-slate-800">Ubicación de la Emergencia</h2>
+                                <p className="text-xs text-gray-500 font-bold mt-1">
+                                    Reportado por: {alertaMapaSeleccionada.estudiante_nombre}
+                                </p>
+                            </div>
+                            <button 
+                                onClick={() => setIsMapModalOpen(false)} 
+                                className="bg-white text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition shadow-sm border border-gray-200"
+                            >
+                                <IconClose />
+                            </button>
+                        </div>
+
+                        {/* Cuerpo con el mapa incrustado */}
+                        <div className="p-6">
+                            <div className="w-full h-80 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative mb-6">
+                                <iframe
+                                    width="100%"
+                                    height="100%"
+                                    frameBorder="0"
+                                    scrolling="no"
+                                    marginHeight="0"
+                                    marginWidth="0"
+                                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(alertaMapaSeleccionada.longitud) - 0.005}%2C${parseFloat(alertaMapaSeleccionada.latitud) - 0.005}%2C${parseFloat(alertaMapaSeleccionada.longitud) + 0.005}%2C${parseFloat(alertaMapaSeleccionada.latitud) + 0.005}&layer=mapnik&marker=${alertaMapaSeleccionada.latitud}%2C${alertaMapaSeleccionada.longitud}`}
+                                    className="absolute inset-0"
+                                ></iframe>
+                            </div>
+
+                            {/* Botón inferior para pantalla completa */}
+                            <a 
+                                href={`https://www.openstreetmap.org/?mlat=${alertaMapaSeleccionada.latitud}&mlon=${alertaMapaSeleccionada.longitud}#map=17/${alertaMapaSeleccionada.latitud}/${alertaMapaSeleccionada.longitud}`} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+                            >
+                                📍 Abrir en OpenStreetMap (Pantalla Completa)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
