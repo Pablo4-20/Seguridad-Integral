@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\IncidenteController;
 use App\Http\Controllers\Api\NoticiaController;
 use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\AdminController; 
+use App\Http\Controllers\Api\ComunicadoController;
 // --- Importaciones para Diagnóstico de Firebase ---
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
@@ -72,6 +73,7 @@ Route::get('/debug-fcm', function () {
 Route::get('/mapa/puntos', [AdminController::class, 'listarPuntos']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+Route::get('/comunicados', [ComunicadoController::class, 'index']);
 
 // Ruta de Verificación de Email
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
@@ -98,6 +100,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/noticias', [AdminController::class, 'crearNoticia']);
     Route::match(['put', 'post'], '/admin/noticias/{id}', [AdminController::class, 'actualizarNoticia']);
     Route::delete('/admin/noticias/{id}', [AdminController::class, 'borrarNoticia']);
+
+    Route::post('/comunicados', [ComunicadoController::class, 'store']);
+    Route::post('/comunicados/{id}', [ComunicadoController::class, 'update']); // Usamos POST porque los archivos en PHP fallan a veces con PUT
+    Route::delete('/comunicados/{id}', [ComunicadoController::class, 'destroy']);
 
     // --- RUTAS DE USUARIO (Móvil) ---
     Route::get('/perfil', [AuthController::class, 'me']); 

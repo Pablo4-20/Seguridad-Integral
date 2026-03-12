@@ -8,6 +8,7 @@ const api = axios.create({
     }
 });
 
+
 // Interceptor: Si ya iniciamos sesión, enviamos el token automáticamente
 api.interceptors.request.use(config => {
     const token = localStorage.getItem('token');

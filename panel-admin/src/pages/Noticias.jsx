@@ -14,9 +14,10 @@ const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" view
 const IconError = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>;
 const IconMap = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>;
 const IconPublish = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-ueb-blue"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.126A59.768 59.768 0 0 1 21.485 12 59.77 59.77 0 0 1 3.27 20.876L5.999 12Zm0 0h7.5" /></svg>;
-const IconWarning = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-red-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>;
 const IconFilter = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" /></svg>;
 const IconChevronDown = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>;
+// Icono Nuevo para PDF
+const IconPdf = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>;
 
 // --- DATOS DE CATEGORÍAS ---
 const categories = [
@@ -27,35 +28,47 @@ const categories = [
     { id: 'notificacion', label: 'Alerta / Aviso', icon: '⚠️', description: 'Mensajes urgentes.' },
 ];
 
-export default function Noticias() {
-    const [noticias, setNoticias] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('nueva'); 
-    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+// --- FUNCIONES DE MAPEO PARA PDF ---
+// El backend de PDFs espera nombres ligeramente distintos a los de las Noticias.
+const mapCategoryToPdf = (frontendCat) => {
+    const map = { 'noticia': 'plan_estudiantil', 'protocolo': 'protocolos_seguridad', 'recomendacion': 'recomendaciones', 'mochila': 'mochila_emergencia', 'notificacion': 'alertas_avisos' };
+    return map[frontendCat] || 'plan_estudiantil';
+};
+const mapPdfToCategory = (backendCat) => {
+    const map = { 'plan_estudiantil': 'noticia', 'protocolos_seguridad': 'protocolo', 'recomendaciones': 'recomendacion', 'mochila_emergencia': 'mochila', 'alertas_avisos': 'notificacion' };
+    return map[backendCat] || 'noticia';
+}
 
-    // Filtro de Categoría
+export default function Noticias() {
+    const [publicaciones, setPublicaciones] = useState([]); // Array unificado
+    const [loading, setLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState('lista'); // 'nueva', 'nuevo_pdf', 'lista', 'mapa'
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
     const [filtroCategoria, setFiltroCategoria] = useState('todas');
 
-    // Estados de Modales y Edición
+    // Estados de Modales
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [itemToDelete, setItemToDelete] = useState(null);
+    const [itemToDelete, setItemToDelete] = useState(null); // Guarda el objeto completo para saber su origen
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
     
     // Estado de Edición
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
 
-    // Estados del Formulario
+    // Estados del Formulario (Compartidos y Específicos)
     const [titulo, setTitulo] = useState('');
+    const [tipo, setTipo] = useState('noticia'); // Categoría compartida
+    
+    // Para Noticias
     const [contenido, setContenido] = useState('');
-    const [tipo, setTipo] = useState('noticia');
     const [imagen, setImagen] = useState(null);
     const [preview, setPreview] = useState(null);
+
+    // Para PDFs
+    const [archivoPdf, setArchivoPdf] = useState(null);
     
-    // Estado para el Dropdown Personalizado
     const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
-    // Configuración Editor
     const modules = {
         toolbar: [
             [{ 'header': [1, 2, false] }],
@@ -67,36 +80,41 @@ export default function Noticias() {
         ],
     };
 
-    const formats = [
-        'header',
-         'bold', 
-         'italic',
-          'underline', 
-          'strike', 
-          'list', 
-          //'bullet',
-           'color', 
-           'background',
-            'align'
-    ];
+    const formats = ['header', 'bold', 'italic', 'underline', 'strike', 'list', 'color', 'background', 'align'];
 
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
         setTimeout(() => setToast({ ...toast, show: false }), 3000);
     };
 
-    const cargarNoticias = async () => {
+    // --- CARGAR AMBAS FUENTES Y UNIRLAS ---
+    const cargarPublicaciones = async () => {
         try {
-            const res = await api.get('/admin/noticias');
-            setNoticias(res.data);
+            const [resNoticias, resPdfs] = await Promise.all([
+                api.get('/admin/noticias'),
+                api.get('/comunicados')
+            ]);
+
+            // Marcamos el origen para saber qué API llamar al editar/eliminar
+            const noticiasData = resNoticias.data.map(n => ({ ...n, source: 'noticia' }));
+            const pdfsData = resPdfs.data.map(p => ({ 
+                ...p, 
+                source: 'pdf', 
+                tipo: mapPdfToCategory(p.categoria) // Homologamos la categoría para los filtros
+            }));
+
+            // Unimos todo y ordenamos del más nuevo al más viejo
+            const todas = [...noticiasData, ...pdfsData].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            setPublicaciones(todas);
         } catch (error) {
-            console.error("Error cargando noticias");
+            console.error("Error cargando publicaciones", error);
         }
     };
 
-    useEffect(() => { cargarNoticias() }, []);
+    useEffect(() => { cargarPublicaciones() }, []);
 
-    const noticiasFiltradas = noticias.filter(item => 
+    const publicacionesFiltradas = publicaciones.filter(item => 
         filtroCategoria === 'todas' || item.tipo === filtroCategoria
     );
 
@@ -108,9 +126,6 @@ export default function Noticias() {
         }
     };
 
-    // --- FUNCIONES DE LIMPIEZA Y EDICIÓN ---
-    
-    // Solo limpia los datos, NO cambia la pestaña
     const resetForm = () => {
         setIsEditing(false);
         setEditId(null);
@@ -118,27 +133,30 @@ export default function Noticias() {
         setContenido('');
         setImagen(null);
         setPreview(null);
+        setArchivoPdf(null);
     };
 
-    // Acción del botón "Cancelar" dentro del formulario
     const handleCancelEdit = () => {
         resetForm();
-        setActiveTab('lista'); // Aquí sí queremos volver a la lista
+        setActiveTab('lista');
     };
 
-    // Acción del botón "Editar" en la tarjeta
+    // --- ACCIÓN DE EDITAR ---
     const handleEditClick = (item) => {
         setIsEditing(true);
         setEditId(item.id);
-        
-        // Llenar formulario
         setTitulo(item.titulo);
-        setContenido(item.contenido);
         setTipo(item.tipo);
-        setPreview(item.imagen_url); 
-        setImagen(null); 
-
-        setActiveTab('nueva'); // Ir al formulario
+        
+        if (item.source === 'pdf') {
+            setArchivoPdf(null); // Obliga a subir uno nuevo si se edita
+            setActiveTab('nuevo_pdf');
+        } else {
+            setContenido(item.contenido);
+            setPreview(item.imagen_url); 
+            setImagen(null); 
+            setActiveTab('nueva');
+        }
     };
 
     const handlePreSubmit = (e) => {
@@ -146,52 +164,58 @@ export default function Noticias() {
         setIsPublishModalOpen(true);
     };
 
+    // --- ACCIÓN DE PUBLICAR / ACTUALIZAR ---
     const handleConfirmPublish = async () => {
         setLoading(true);
         setIsPublishModalOpen(false);
-
         const formData = new FormData();
         formData.append('titulo', titulo);
-        formData.append('contenido', contenido);
-        formData.append('tipo', tipo);
-        
-        if (imagen) {
-            formData.append('imagen', imagen);
-        }
-
-        if (isEditing) {
-            formData.append('_method', 'PUT');
-        }
 
         try {
-            const url = isEditing ? `/admin/noticias/${editId}` : '/admin/noticias';
+            if (activeTab === 'nuevo_pdf') {
+                // GUARDADO PARA PDF
+                formData.append('categoria', mapCategoryToPdf(tipo));
+                if (archivoPdf) formData.append('archivo_pdf', archivoPdf);
+                
+                const url = isEditing ? `/comunicados/${editId}` : '/comunicados';
+                await api.post(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+
+            } else {
+                // GUARDADO PARA NOTICIA / ARTÍCULO
+                formData.append('contenido', contenido);
+                formData.append('tipo', tipo);
+                if (imagen) formData.append('imagen', imagen);
+                if (isEditing) formData.append('_method', 'PUT');
+
+                const url = isEditing ? `/admin/noticias/${editId}` : '/admin/noticias';
+                await api.post(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+            }
             
-            await api.post(url, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            
-            showToast(isEditing ? 'Publicación actualizada correctamente' : 'Publicación creada exitosamente', 'success');
-            
-            resetForm(); // Limpiamos formulario
-            cargarNoticias();
-            setActiveTab('lista'); // Volvemos a la lista
+            showToast(isEditing ? 'Actualizado correctamente' : 'Publicado exitosamente', 'success');
+            resetForm(); 
+            cargarPublicaciones();
+            setActiveTab('lista'); 
         } catch (error) {
-            showToast('Error al guardar. Intenta de nuevo.', 'error');
+            showToast('Error al guardar. Verifica los datos.', 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDeleteClick = (id) => {
-        setItemToDelete(id);
+    const handleDeleteClick = (item) => {
+        setItemToDelete(item);
         setIsDeleteModalOpen(true);
     };
 
     const handleConfirmDelete = async () => {
         try {
-            await api.delete(`/admin/noticias/${itemToDelete}`);
+            if (itemToDelete.source === 'pdf') {
+                await api.delete(`/comunicados/${itemToDelete.id}`);
+            } else {
+                await api.delete(`/admin/noticias/${itemToDelete.id}`);
+            }
             showToast('Publicación eliminada', 'success');
-            cargarNoticias();
+            cargarPublicaciones();
         } catch (error) {
             showToast('Error al eliminar', 'error');
         } finally {
@@ -206,14 +230,14 @@ export default function Noticias() {
             case 'recomendacion': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
             case 'notificacion': return 'bg-amber-100 text-amber-700 border-amber-200';
             case 'mochila': return 'bg-purple-100 text-purple-700 border-purple-200';
-            case 'ruta_evacuacion': return 'bg-orange-100 text-orange-700 border-orange-200';
             default: return 'bg-blue-100 text-blue-700 border-blue-200';
         }
     };
 
-    const getFriendlyName = (type) => {
-        const cat = categories.find(c => c.id === type);
-        return cat ? cat.label : type.toUpperCase();
+    // Función auxiliar para construir la URL base del backend
+    const getBackendUrl = () => {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+        return apiUrl.replace('/api', ''); 
     };
 
     return (
@@ -235,36 +259,46 @@ export default function Noticias() {
 
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-ueb-blue">Gestión de Contenidos</h1>
-                <p className="text-gray-600 mt-2">Publica noticias, protocolos y alertas para la App Móvil.</p>
+                <p className="text-gray-600 mt-2">Publica artículos, documentos PDF y alertas para la comunidad.</p>
             </div>
 
-            {/* TABS CORREGIDOS */}
-            <div className="flex space-x-1 bg-white p-1 rounded-xl shadow-sm border border-gray-200 w-fit mb-8">
+            {/* TABS ACTUALIZADOS */}
+            <div className="flex flex-wrap gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-gray-200 w-fit mb-8">
                 <button 
                     onClick={() => { resetForm(); setActiveTab('nueva'); }} 
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === 'nueva' ? 'bg-ueb-blue text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === 'nueva' ? 'bg-ueb-blue text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
                 >
-                    <IconAdd /> {isEditing ? 'Editando Publicación' : 'Nueva Publicación'}
+                    <IconAdd /> {isEditing && activeTab === 'nueva' ? 'Editando Artículo' : 'Nuevo Artículo'}
                 </button>
                 <button 
+                    onClick={() => { resetForm(); setActiveTab('nuevo_pdf'); }} 
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === 'nuevo_pdf' ? 'bg-red-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                    <IconPdf /> {isEditing && activeTab === 'nuevo_pdf' ? 'Editando PDF' : 'Nuevo Documento PDF'}
+                </button>
+                <div className="w-px bg-gray-200 mx-1"></div>
+                <button 
                     onClick={() => { resetForm(); setActiveTab('lista'); }} 
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === 'lista' ? 'bg-ueb-blue text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === 'lista' ? 'bg-ueb-blue text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
                 >
                     <IconNews /> Publicaciones Activas
                 </button>
                 <button 
                     onClick={() => { resetForm(); setActiveTab('mapa'); }} 
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === 'mapa' ? 'bg-ueb-blue text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === 'mapa' ? 'bg-ueb-blue text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
                 >
                     <IconMap /> Rutas y Puntos
                 </button>
             </div>
 
-            {/* --- VISTA 1: FORMULARIO --- */}
-            {activeTab === 'nueva' && (
+            {/* --- VISTA: FORMULARIO (COMPARTIDO PARA NOTICIA Y PDF) --- */}
+            {(activeTab === 'nueva' || activeTab === 'nuevo_pdf') && (
                 <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-visible">
                     <div className="bg-gray-50 px-8 py-4 border-b border-gray-200 flex justify-between items-center">
-                        <h2 className="text-lg font-bold text-gray-700">{isEditing ? 'Editar Contenido' : 'Redactar Contenido'}</h2>
+                        <h2 className="text-lg font-bold text-gray-700">
+                            {isEditing ? 'Editar ' : 'Redactar '}
+                            {activeTab === 'nuevo_pdf' ? 'Documento PDF' : 'Contenido'}
+                        </h2>
                         {isEditing && (
                             <button onClick={handleCancelEdit} className="text-xs text-red-500 font-bold hover:underline">
                                 Cancelar Edición
@@ -273,6 +307,7 @@ export default function Noticias() {
                     </div>
                     
                     <form onSubmit={handlePreSubmit} className="p-8 space-y-6">
+                        {/* CAMPOS COMPARTIDOS (Título y Categoría) */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Título</label>
@@ -281,35 +316,24 @@ export default function Noticias() {
                             
                             <div className="relative">
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Categoría</label>
-                                <button 
-                                    type="button"
-                                    onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                                    className="w-full px-4 py-3 text-left bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-ueb-blue focus:border-transparent flex items-center justify-between transition-all hover:border-gray-300"
-                                >
+                                <button type="button" onClick={() => setIsCategoryOpen(!isCategoryOpen)} className="w-full px-4 py-3 text-left bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-ueb-blue flex items-center justify-between">
                                     <span className="flex items-center gap-3">
                                         <span className="text-xl">{categories.find(c => c.id === tipo)?.icon}</span>
                                         <span className="font-medium text-gray-700 truncate">{categories.find(c => c.id === tipo)?.label}</span>
                                     </span>
                                     <IconChevronDown />
                                 </button>
-
                                 {isCategoryOpen && (
                                     <>
                                         <div className="fixed inset-0 z-10" onClick={() => setIsCategoryOpen(false)}></div>
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 z-20 overflow-hidden animate-fade-in-up max-h-80 overflow-y-auto">
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 z-20 overflow-hidden max-h-80 overflow-y-auto">
                                             {categories.map(cat => (
-                                                <button
-                                                    key={cat.id}
-                                                    type="button"
-                                                    onClick={() => { setTipo(cat.id); setIsCategoryOpen(false); }}
-                                                    className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-0 ${tipo === cat.id ? 'bg-blue-50/50' : ''}`}
-                                                >
+                                                <button key={cat.id} type="button" onClick={() => { setTipo(cat.id); setIsCategoryOpen(false); }} className={`w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 text-left border-b border-gray-50 ${tipo === cat.id ? 'bg-blue-50/50' : ''}`}>
                                                     <span className="text-2xl mt-0.5">{cat.icon}</span>
                                                     <div>
                                                         <p className={`font-bold text-sm ${tipo === cat.id ? 'text-ueb-blue' : 'text-gray-800'}`}>{cat.label}</p>
                                                         <p className="text-xs text-gray-400">{cat.description}</p>
                                                     </div>
-                                                    {tipo === cat.id && <div className="ml-auto text-ueb-blue"><IconCheck /></div>}
                                                 </button>
                                             ))}
                                         </div>
@@ -318,46 +342,61 @@ export default function Noticias() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="h-48">
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Imagen (Opcional)</label>
-                                <label className="flex flex-col items-center justify-center w-full h-[calc(100%-1.5rem)] rounded-xl border-2 border-dashed border-gray-300 hover:border-ueb-blue hover:bg-blue-50 transition cursor-pointer text-gray-400 group">
-                                    <IconImage />
-                                    <span className="mt-2 text-sm font-medium group-hover:text-ueb-blue">
-                                        {isEditing && preview ? 'Cambiar imagen' : 'Subir imagen'}
-                                    </span>
-                                    <input type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
-                                </label>
-                            </div>
-                            <div className="h-48 relative">
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Vista Previa</label>
-                                <div className="w-full h-[calc(100%-1.5rem)] bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
-                                    {preview ? <img src={preview} alt="Preview" className="w-full h-full object-cover" /> : <span className="text-gray-400 text-sm">Sin imagen</span>}
+                        {/* CAMPOS ESPECÍFICOS SEGÚN EL TIPO */}
+                        {activeTab === 'nueva' ? (
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="h-48">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Imagen (Opcional)</label>
+                                        <label className="flex flex-col items-center justify-center w-full h-[calc(100%-1.5rem)] rounded-xl border-2 border-dashed border-gray-300 hover:border-ueb-blue hover:bg-blue-50 transition cursor-pointer text-gray-400 group">
+                                            <IconImage />
+                                            <span className="mt-2 text-sm font-medium group-hover:text-ueb-blue">{isEditing && preview ? 'Cambiar imagen' : 'Subir imagen'}</span>
+                                            <input type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
+                                        </label>
+                                    </div>
+                                    <div className="h-48 relative">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Vista Previa</label>
+                                        <div className="w-full h-[calc(100%-1.5rem)] bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
+                                            {preview ? <img src={preview} alt="Preview" className="w-full h-full object-cover" /> : <span className="text-gray-400 text-sm">Sin imagen</span>}
+                                        </div>
+                                    </div>
                                 </div>
-                                {preview && <button type="button" onClick={() => {setImagen(null); setPreview(null)}} className="absolute top-8 right-2 bg-white/80 hover:bg-white text-red-500 p-1 rounded-full shadow-sm transition" title="Quitar"><IconTrash /></button>}
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Contenido Detallado</label>
+                                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                        <ReactQuill theme="snow" value={contenido} onChange={setContenido} modules={modules} formats={formats} className="h-60 mb-10" />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="bg-red-50/50 p-6 rounded-xl border border-red-100">
+                                <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                                    <IconPdf /> Selecciona el Archivo PDF {isEditing && '(Opcional)'}
+                                </label>
+                                <input 
+                                    type="file" 
+                                    accept="application/pdf"
+                                    onChange={e => setArchivoPdf(e.target.files[0])} 
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer border border-gray-200 rounded-lg bg-white"
+                                    required={!isEditing} 
+                                />
+                                {isEditing && <p className="text-xs text-gray-500 mt-2">Nota: Si no seleccionas un archivo nuevo, se mantendrá el PDF anterior.</p>}
                             </div>
-                        </div>
-                        
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Contenido Detallado</label>
-                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                                <ReactQuill theme="snow" value={contenido} onChange={setContenido} modules={modules} formats={formats} className="h-60 mb-10" />
-                            </div>
-                        </div>
+                        )}
 
                         <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
                             {isEditing && (
                                 <button type="button" onClick={handleCancelEdit} className="px-6 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition">Cancelar</button>
                             )}
-                            <button type="submit" disabled={loading} className={`text-white font-bold py-3 px-8 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center gap-2 ${isEditing ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-ueb-blue hover:bg-slate-900'}`}>
-                                {loading ? (isEditing ? 'Actualizando...' : 'Publicando...') : <>{isEditing ? <IconCheck /> : <IconPublish />} {isEditing ? 'Actualizar' : 'Publicar'}</>}
+                            <button type="submit" disabled={loading} className={`text-white font-bold py-3 px-8 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center gap-2 ${isEditing ? 'bg-yellow-500' : 'bg-ueb-blue'}`}>
+                                {loading ? 'Procesando...' : <>{isEditing ? <IconCheck /> : <IconPublish />} {isEditing ? 'Actualizar' : 'Publicar'}</>}
                             </button>
                         </div>
                     </form>
                 </div>
             )}
 
-            {/* --- VISTA 2: LISTA --- */}
+            {/* --- VISTA: LISTA DE PUBLICACIONES UNIFICADA --- */}
             {activeTab === 'lista' && (
                 <div className="space-y-6">
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4">
@@ -373,44 +412,48 @@ export default function Noticias() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {noticiasFiltradas.length === 0 ? (
+                        {publicacionesFiltradas.length === 0 ? (
                             <div className="col-span-full text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
                                 <p className="text-gray-400 text-lg font-medium">{filtroCategoria !== 'todas' ? 'No hay publicaciones en esta categoría.' : 'No hay publicaciones activas.'}</p>
-                                {filtroCategoria === 'todas' && <button onClick={() => setActiveTab('nueva')} className="mt-2 text-ueb-blue font-bold hover:underline">Crear la primera</button>}
                             </div>
                         ) : (
-                            noticiasFiltradas.map(item => (
-                                <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-                                    <div className="h-40 w-full bg-gray-100 relative group">
-                                        {item.imagen_url ? (
-                                            <img src={item.imagen_url} alt={item.titulo} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.classList.add('flex', 'items-center', 'justify-center'); e.target.parentNode.innerHTML = '<span class="text-4xl opacity-30">🖼️</span>'; }} />
+                            publicacionesFiltradas.map(item => (
+                                <div key={item.id + item.source} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                                    <div className="h-40 w-full bg-gray-100 relative group flex items-center justify-center">
+                                        {/* RENDERIZADO VISUAL DEPENDE DEL ORIGEN (PDF vs Imagen) */}
+                                        {item.source === 'pdf' ? (
+                                            <div className="text-red-500 flex flex-col items-center">
+                                                <IconPdf />
+                                                <span className="text-xs font-bold mt-2 text-red-600">DOCUMENTO PDF</span>
+                                            </div>
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-300"><IconImage /></div>
+                                            item.imagen_url ? (
+                                                <img src={item.imagen_url} alt={item.titulo} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                            ) : (
+                                                <div className="text-gray-300"><IconImage /></div>
+                                            )
                                         )}
-                                        <div className="absolute top-3 right-3"><span className={`text-[10px] font-extrabold px-3 py-1 rounded-full uppercase border shadow-sm tracking-wide ${getBadgeColor(item.tipo)}`}>{getFriendlyName(item.tipo)}</span></div>
+                                        <div className="absolute top-3 right-3"><span className={`text-[10px] font-extrabold px-3 py-1 rounded-full uppercase border shadow-sm tracking-wide ${getBadgeColor(item.tipo)}`}>{categories.find(c => c.id === item.tipo)?.label || item.tipo}</span></div>
                                     </div>
+
                                     <div className="p-4 flex-1 flex flex-col">
                                         <div className="flex justify-between items-center mb-2"><span className="text-xs font-medium text-gray-400">📅 {new Date(item.created_at).toLocaleDateString()}</span></div>
                                         <h3 className="text-base font-bold text-slate-800 mb-2 leading-tight line-clamp-2">{item.titulo}</h3>
-                                        <div className="text-xs text-gray-500 line-clamp-2 mb-3 flex-1 prose prose-sm" dangerouslySetInnerHTML={{ __html: item.contenido }} />
+                                        
+                                        {/* CONTENIDO (HTML para noticias, Link para PDF) */}
+                                        <div className="mb-3 flex-1">
+                                            {item.source === 'pdf' ? (
+                                                <a href={`${getBackendUrl()}${item.archivo_pdf}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-bold text-ueb-blue hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                                                    📄 Ver / Descargar
+                                                </a>
+                                            ) : (
+                                                <div className="text-xs text-gray-500 line-clamp-2 prose prose-sm" dangerouslySetInnerHTML={{ __html: item.contenido }} />
+                                            )}
+                                        </div>
                                         
                                         <div className="pt-3 border-t border-gray-50 flex justify-end gap-2">
-                                            {/* BOTÓN EDITAR */}
-                                            <button 
-                                                onClick={() => handleEditClick(item)} 
-                                                className="text-indigo-500 hover:text-indigo-700 p-1.5 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                title="Editar"
-                                            >
-                                                <IconEdit />
-                                            </button>
-                                            {/* BOTÓN ELIMINAR */}
-                                            <button 
-                                                onClick={() => handleDeleteClick(item.id)} 
-                                                className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Eliminar"
-                                            >
-                                                <IconTrash />
-                                            </button>
+                                            <button onClick={() => handleEditClick(item)} className="text-indigo-500 hover:text-indigo-700 p-1.5 hover:bg-indigo-50 rounded-lg transition-colors" title="Editar"><IconEdit /></button>
+                                            <button onClick={() => handleDeleteClick(item)} className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar"><IconTrash /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -420,7 +463,7 @@ export default function Noticias() {
                 </div>
             )}
 
-            {/* --- VISTA 3: MAPA --- */}
+            {/* --- VISTA: MAPA --- */}
             {activeTab === 'mapa' && (
                 <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden p-4">
                     <div className="mb-4 px-2"><h2 className="text-lg font-bold text-gray-700">Gestión de Rutas y Puntos</h2><p className="text-sm text-gray-500">Haz clic en el mapa para agregar puntos de encuentro o zonas de peligro.</p></div>
@@ -431,11 +474,15 @@ export default function Noticias() {
             {/* MODALES */}
             {isPublishModalOpen && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center transform scale-100 transition-all">
-                        <div className="mx-auto bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mb-6"><IconPublish /></div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">{isEditing ? '¿Actualizar?' : '¿Publicar?'}</h3>
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
+                        <div className={`mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-6 ${activeTab === 'nuevo_pdf' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-ueb-blue'}`}>
+                           {activeTab === 'nuevo_pdf' ? <IconPdf /> : <IconPublish />}
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">{isEditing ? '¿Actualizar Contenido?' : '¿Publicar Contenido?'}</h3>
                         <div className="flex flex-col gap-3 mt-6">
-                            <button onClick={handleConfirmPublish} className={`w-full py-3 text-white font-bold rounded-xl shadow-lg ${isEditing ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-ueb-blue hover:bg-blue-900'}`}>Sí, {isEditing ? 'Actualizar' : 'Publicar'}</button>
+                            <button onClick={handleConfirmPublish} className={`w-full py-3 text-white font-bold rounded-xl shadow-lg ${isEditing ? 'bg-yellow-500' : (activeTab === 'nuevo_pdf' ? 'bg-red-600' : 'bg-ueb-blue')}`}>
+                                Sí, {isEditing ? 'Actualizar' : 'Publicar'}
+                            </button>
                             <button onClick={() => setIsPublishModalOpen(false)} className="w-full py-3 bg-transparent text-slate-500 font-bold">Cancelar</button>
                         </div>
                     </div>
@@ -445,7 +492,8 @@ export default function Noticias() {
             {isDeleteModalOpen && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">¿Eliminar?</h3>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">¿Eliminar esta publicación?</h3>
+                        <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
                         <div className="flex flex-col gap-3 mt-6">
                             <button onClick={handleConfirmDelete} className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg">Sí, Eliminar</button>
                             <button onClick={() => setIsDeleteModalOpen(false)} className="w-full py-3 bg-transparent text-slate-500 font-bold">Cancelar</button>

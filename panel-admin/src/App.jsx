@@ -7,6 +7,7 @@ import Noticias from './pages/Noticias';
 import Usuarios from './pages/Usuarios';
 import MainLayout from './layouts/MainLayout';
 
+
 // Verifica que haya sesión iniciada
 const ProtectedRoute = () => {
   const token = localStorage.getItem('token');
@@ -39,6 +40,7 @@ function App() {
                     <Route path="/usuarios/administrativos" element={<Usuarios tipo="admin" />} />
                     <Route path="/usuarios/comunidad" element={<Usuarios tipo="comunidad" />} />
                 </Route>
+                
 
             </Route>
         </Route>
