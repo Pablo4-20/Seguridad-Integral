@@ -443,9 +443,9 @@ export default function Noticias() {
                                         {/* CONTENIDO (HTML para noticias, Link para PDF) */}
                                         <div className="mb-3 flex-1">
                                             {item.source === 'pdf' ? (
-                                                <a href={`${getBackendUrl()}${item.archivo_pdf}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-bold text-ueb-blue hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
-                                                    📄 Ver / Descargar
-                                                </a>
+                                               <a href={`${getBackendUrl()}/api/documento/${item.archivo_pdf.split('/').pop()}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-bold text-ueb-blue hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                                                📄 Ver / Descargar
+                                            </a>
                                             ) : (
                                                 <div className="text-xs text-gray-500 line-clamp-2 prose prose-sm" dangerouslySetInnerHTML={{ __html: item.contenido }} />
                                             )}

@@ -159,3 +159,17 @@ Route::get('/imagen-noticia/{archivo}', function ($archivo) {
 
     return response()->file($ruta);
 });
+
+Route::get('/documento/{archivo}', function ($archivo) {
+    $ruta = storage_path('app/public/comunicados/' . $archivo);
+    
+    if (!file_exists($ruta)) {
+        return response()->json(['error' => 'Documento no encontrado'], 404);
+    }
+
+    // Le decimos al navegador que es un PDF para que permita verlo o descargarlo
+    return response()->file($ruta, [
+        'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . $archivo . '"'
+    ]);
+});
