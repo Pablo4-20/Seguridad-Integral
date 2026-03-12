@@ -14,10 +14,9 @@ const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" view
 const IconError = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>;
 const IconMap = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>;
 const IconPublish = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-ueb-blue"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.126A59.768 59.768 0 0 1 21.485 12 59.77 59.77 0 0 1 3.27 20.876L5.999 12Zm0 0h7.5" /></svg>;
+const IconWarning = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-red-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>;
 const IconFilter = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" /></svg>;
 const IconChevronDown = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>;
-const IconDocument = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>;
-const IconEye = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>;
 
 // --- DATOS DE CATEGORÍAS ---
 const categories = [
@@ -28,20 +27,10 @@ const categories = [
     { id: 'notificacion', label: 'Alerta / Aviso', icon: '⚠️', description: 'Mensajes urgentes.' },
 ];
 
-// --- DETECCIÓN ESTRICTA DE PDF ---
-// Ahora solo considerará que es un PDF si la URL guardada explícitamente termina en .pdf
-const isItemPdf = (item) => {
-    if (!item || !item.imagen_url) return false;
-    return item.imagen_url.toLowerCase().endsWith('.pdf');
-};
-
 export default function Noticias() {
     const [noticias, setNoticias] = useState([]);
     const [loading, setLoading] = useState(false);
-    
     const [activeTab, setActiveTab] = useState('nueva'); 
-    const [creationMode, setCreationMode] = useState('redactar'); 
-
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     // Filtro de Categoría
@@ -60,11 +49,8 @@ export default function Noticias() {
     const [titulo, setTitulo] = useState('');
     const [contenido, setContenido] = useState('');
     const [tipo, setTipo] = useState('noticia');
-    
-    // Archivos
     const [imagen, setImagen] = useState(null);
     const [preview, setPreview] = useState(null);
-    const [archivoPdf, setArchivoPdf] = useState(null); 
     
     // Estado para el Dropdown Personalizado
     const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -82,7 +68,16 @@ export default function Noticias() {
     };
 
     const formats = [
-        'header', 'bold', 'italic', 'underline', 'strike', 'list', 'color', 'background', 'align'
+        'header',
+         'bold', 
+         'italic',
+          'underline', 
+          'strike', 
+          'list', 
+          //'bullet',
+           'color', 
+           'background',
+            'align'
     ];
 
     const showToast = (message, type = 'success') => {
@@ -108,31 +103,14 @@ export default function Noticias() {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('La imagen es muy pesada. Máximo 5MB.', 'error');
-                e.target.value = null;
-                return;
-            }
             setImagen(file);
             setPreview(URL.createObjectURL(file));
         }
     };
 
-    const handlePdfChange = (e) => {
-        const file = e.target.files[0];
-        if (file && file.type === 'application/pdf') {
-            if (file.size > 15 * 1024 * 1024) {
-                showToast('El PDF es muy pesado. Máximo 15MB.', 'error');
-                e.target.value = null;
-                return;
-            }
-            setArchivoPdf(file);
-        } else if (file) {
-            showToast('Por favor selecciona un archivo PDF válido', 'error');
-        }
-    };
-
     // --- FUNCIONES DE LIMPIEZA Y EDICIÓN ---
+    
+    // Solo limpia los datos, NO cambia la pestaña
     const resetForm = () => {
         setIsEditing(false);
         setEditId(null);
@@ -140,46 +118,31 @@ export default function Noticias() {
         setContenido('');
         setImagen(null);
         setPreview(null);
-        setArchivoPdf(null);
-        setCreationMode('redactar'); 
     };
 
+    // Acción del botón "Cancelar" dentro del formulario
     const handleCancelEdit = () => {
         resetForm();
-        setActiveTab('lista'); 
+        setActiveTab('lista'); // Aquí sí queremos volver a la lista
     };
 
+    // Acción del botón "Editar" en la tarjeta
     const handleEditClick = (item) => {
         setIsEditing(true);
         setEditId(item.id);
         
+        // Llenar formulario
         setTitulo(item.titulo);
-        setContenido(item.contenido || '');
+        setContenido(item.contenido);
         setTipo(item.tipo);
+        setPreview(item.imagen_url); 
         setImagen(null); 
-        setArchivoPdf(null);
 
-        // Utilizamos nuestra detección estricta para asignar el modo correcto de edición
-        if (isItemPdf(item)) {
-            setCreationMode('pdf');
-            // Guardamos la URL en 'preview' para poder mostrar el botón "Ver PDF Actual" en el formulario
-            setPreview(item.imagen_url); 
-        } else {
-            setCreationMode('redactar');
-            setPreview(item.imagen_url); 
-        }
-
-        setActiveTab('nueva');
+        setActiveTab('nueva'); // Ir al formulario
     };
 
     const handlePreSubmit = (e) => {
         e.preventDefault();
-        
-        if (creationMode === 'pdf' && !archivoPdf && !isEditing) {
-            showToast('Debes adjuntar un archivo PDF', 'error');
-            return;
-        }
-
         setIsPublishModalOpen(true);
     };
 
@@ -189,14 +152,11 @@ export default function Noticias() {
 
         const formData = new FormData();
         formData.append('titulo', titulo);
+        formData.append('contenido', contenido);
         formData.append('tipo', tipo);
         
-        if (creationMode === 'redactar') {
-            formData.append('contenido', contenido);
-            if (imagen) formData.append('imagen', imagen);
-        } else if (creationMode === 'pdf') {
-            formData.append('contenido', contenido || 'Documento PDF adjunto.'); 
-            if (archivoPdf) formData.append('archivo_pdf', archivoPdf);
+        if (imagen) {
+            formData.append('imagen', imagen);
         }
 
         if (isEditing) {
@@ -212,9 +172,9 @@ export default function Noticias() {
             
             showToast(isEditing ? 'Publicación actualizada correctamente' : 'Publicación creada exitosamente', 'success');
             
-            resetForm();
+            resetForm(); // Limpiamos formulario
             cargarNoticias();
-            setActiveTab('lista');
+            setActiveTab('lista'); // Volvemos a la lista
         } catch (error) {
             showToast('Error al guardar. Intenta de nuevo.', 'error');
         } finally {
@@ -278,7 +238,7 @@ export default function Noticias() {
                 <p className="text-gray-600 mt-2">Publica noticias, protocolos y alertas para la App Móvil.</p>
             </div>
 
-            {/* TABS PRINCIPALES */}
+            {/* TABS CORREGIDOS */}
             <div className="flex space-x-1 bg-white p-1 rounded-xl shadow-sm border border-gray-200 w-fit mb-8">
                 <button 
                     onClick={() => { resetForm(); setActiveTab('nueva'); }} 
@@ -304,7 +264,7 @@ export default function Noticias() {
             {activeTab === 'nueva' && (
                 <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-visible">
                     <div className="bg-gray-50 px-8 py-4 border-b border-gray-200 flex justify-between items-center">
-                        <h2 className="text-lg font-bold text-gray-700">{isEditing ? 'Editar Contenido' : 'Crear Nuevo Contenido'}</h2>
+                        <h2 className="text-lg font-bold text-gray-700">{isEditing ? 'Editar Contenido' : 'Redactar Contenido'}</h2>
                         {isEditing && (
                             <button onClick={handleCancelEdit} className="text-xs text-red-500 font-bold hover:underline">
                                 Cancelar Edición
@@ -313,30 +273,9 @@ export default function Noticias() {
                     </div>
                     
                     <form onSubmit={handlePreSubmit} className="p-8 space-y-6">
-                        
-                        {/* --- SUBMENÚ: REDACTAR vs SUBIR PDF --- */}
-                        <div className="flex bg-gray-100 p-1 rounded-xl w-fit mb-6">
-                            <button
-                                type="button"
-                                onClick={() => setCreationMode('redactar')}
-                                className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-lg transition-all ${creationMode === 'redactar' ? 'bg-white shadow text-ueb-blue' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                ✍️ Redactar Contenido
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setCreationMode('pdf')}
-                                className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-lg transition-all ${creationMode === 'pdf' ? 'bg-white shadow text-red-600' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                📄 Subir Documento PDF
-                            </button>
-                        </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                    {creationMode === 'pdf' ? 'Título del Documento' : 'Título'}
-                                </label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Título</label>
                                 <input type="text" className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-ueb-blue outline-none text-gray-800" value={titulo} onChange={e => setTitulo(e.target.value)} required />
                             </div>
                             
@@ -379,74 +318,38 @@ export default function Noticias() {
                             </div>
                         </div>
 
-                        {/* RENDERIZADO CONDICIONAL SEGÚN EL MODO ELEGIDO */}
-                        {creationMode === 'redactar' ? (
-                            <>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="h-48">
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Imagen Principal (Opcional)</label>
-                                        <label className="flex flex-col items-center justify-center w-full h-[calc(100%-1.5rem)] rounded-xl border-2 border-dashed border-gray-300 hover:border-ueb-blue hover:bg-blue-50 transition cursor-pointer text-gray-400 group">
-                                            <IconImage />
-                                            <span className="mt-2 text-sm font-medium group-hover:text-ueb-blue">
-                                                {isEditing && preview ? 'Cambiar imagen' : 'Subir imagen'}
-                                            </span>
-                                            <input type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
-                                        </label>
-                                    </div>
-                                    <div className="h-48 relative">
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Vista Previa</label>
-                                        <div className="w-full h-[calc(100%-1.5rem)] bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
-                                            {preview ? <img src={preview} alt="Preview" className="w-full h-full object-cover" /> : <span className="text-gray-400 text-sm">Sin imagen</span>}
-                                        </div>
-                                        {preview && <button type="button" onClick={() => {setImagen(null); setPreview(null)}} className="absolute top-8 right-2 bg-white/80 hover:bg-white text-red-500 p-1 rounded-full shadow-sm transition" title="Quitar"><IconTrash /></button>}
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Contenido Detallado</label>
-                                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                                        <ReactQuill theme="snow" value={contenido} onChange={setContenido} modules={modules} formats={formats} className="h-60 mb-10" />
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            /* MODO PDF */
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="md:col-span-1 min-h-[10rem]">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Archivo PDF</label>
-                                        {/* Botón para ver el PDF actual si se está editando */}
-                                        {isEditing && preview && (
-                                            <a href={preview} target="_blank" rel="noreferrer" className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1 bg-red-50 px-2 py-1 rounded-md">
-                                                Ver PDF Actual
-                                            </a>
-                                        )}
-                                    </div>
-                                    <label className={`flex flex-col items-center justify-center w-full h-40 rounded-xl border-2 border-dashed transition cursor-pointer group ${archivoPdf ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:border-red-500 hover:bg-red-50 text-gray-400'}`}>
-                                        <span className={`text-gray-400 ${archivoPdf && 'text-red-500'}`}><IconDocument /></span>
-                                        <span className={`mt-2 text-sm text-center font-medium px-4 truncate w-full ${archivoPdf ? 'text-red-600' : 'group-hover:text-red-500'}`}>
-                                            {archivoPdf ? archivoPdf.name : (isEditing ? 'Subir nuevo para reemplazar' : 'Seleccionar o arrastrar PDF')}
-                                        </span>
-                                        <input type="file" className="hidden" onChange={handlePdfChange} accept="application/pdf" />
-                                    </label>
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Breve Descripción (Opcional)</label>
-                                    <textarea 
-                                        className="w-full h-40 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none text-gray-800 resize-none" 
-                                        placeholder="Escribe un breve resumen de lo que contiene el PDF..."
-                                        value={contenido} 
-                                        onChange={e => setContenido(e.target.value)} 
-                                    />
-                                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="h-48">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Imagen (Opcional)</label>
+                                <label className="flex flex-col items-center justify-center w-full h-[calc(100%-1.5rem)] rounded-xl border-2 border-dashed border-gray-300 hover:border-ueb-blue hover:bg-blue-50 transition cursor-pointer text-gray-400 group">
+                                    <IconImage />
+                                    <span className="mt-2 text-sm font-medium group-hover:text-ueb-blue">
+                                        {isEditing && preview ? 'Cambiar imagen' : 'Subir imagen'}
+                                    </span>
+                                    <input type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
+                                </label>
                             </div>
-                        )}
+                            <div className="h-48 relative">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Vista Previa</label>
+                                <div className="w-full h-[calc(100%-1.5rem)] bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
+                                    {preview ? <img src={preview} alt="Preview" className="w-full h-full object-cover" /> : <span className="text-gray-400 text-sm">Sin imagen</span>}
+                                </div>
+                                {preview && <button type="button" onClick={() => {setImagen(null); setPreview(null)}} className="absolute top-8 right-2 bg-white/80 hover:bg-white text-red-500 p-1 rounded-full shadow-sm transition" title="Quitar"><IconTrash /></button>}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Contenido Detallado</label>
+                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                <ReactQuill theme="snow" value={contenido} onChange={setContenido} modules={modules} formats={formats} className="h-60 mb-10" />
+                            </div>
+                        </div>
 
                         <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
                             {isEditing && (
                                 <button type="button" onClick={handleCancelEdit} className="px-6 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition">Cancelar</button>
                             )}
-                            <button type="submit" disabled={loading} className={`text-white font-bold py-3 px-8 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center gap-2 ${isEditing ? 'bg-yellow-500 hover:bg-yellow-600' : (creationMode === 'pdf' ? 'bg-red-600 hover:bg-red-700' : 'bg-ueb-blue hover:bg-slate-900')}`}>
+                            <button type="submit" disabled={loading} className={`text-white font-bold py-3 px-8 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center gap-2 ${isEditing ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-ueb-blue hover:bg-slate-900'}`}>
                                 {loading ? (isEditing ? 'Actualizando...' : 'Publicando...') : <>{isEditing ? <IconCheck /> : <IconPublish />} {isEditing ? 'Actualizar' : 'Publicar'}</>}
                             </button>
                         </div>
@@ -479,18 +382,12 @@ export default function Noticias() {
                             noticiasFiltradas.map(item => (
                                 <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
                                     <div className="h-40 w-full bg-gray-100 relative group">
-                                        {/* Enlace directo para abrir el PDF si es un PDF */}
-                                        {isItemPdf(item) ? (
-                                            <a href={item.imagen_url} target="_blank" rel="noreferrer" className="w-full h-full flex flex-col items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 transition cursor-pointer">
-                                                <span className="text-4xl opacity-80 mb-2"><IconDocument /></span>
-                                                <span className="text-xs font-bold uppercase tracking-wider">Ver Documento</span>
-                                            </a>
-                                        ) : item.imagen_url ? (
+                                        {item.imagen_url ? (
                                             <img src={item.imagen_url} alt={item.titulo} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.classList.add('flex', 'items-center', 'justify-center'); e.target.parentNode.innerHTML = '<span class="text-4xl opacity-30">🖼️</span>'; }} />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-gray-300"><IconImage /></div>
                                         )}
-                                        <div className="absolute top-3 right-3 pointer-events-none"><span className={`text-[10px] font-extrabold px-3 py-1 rounded-full uppercase border shadow-sm tracking-wide ${getBadgeColor(item.tipo)}`}>{getFriendlyName(item.tipo)}</span></div>
+                                        <div className="absolute top-3 right-3"><span className={`text-[10px] font-extrabold px-3 py-1 rounded-full uppercase border shadow-sm tracking-wide ${getBadgeColor(item.tipo)}`}>{getFriendlyName(item.tipo)}</span></div>
                                     </div>
                                     <div className="p-4 flex-1 flex flex-col">
                                         <div className="flex justify-between items-center mb-2"><span className="text-xs font-medium text-gray-400">📅 {new Date(item.created_at).toLocaleDateString()}</span></div>
@@ -498,18 +395,6 @@ export default function Noticias() {
                                         <div className="text-xs text-gray-500 line-clamp-2 mb-3 flex-1 prose prose-sm" dangerouslySetInnerHTML={{ __html: item.contenido }} />
                                         
                                         <div className="pt-3 border-t border-gray-50 flex justify-end gap-2">
-                                            {/* BOTÓN VER (SOLO SI ES PDF) */}
-                                            {isItemPdf(item) && (
-                                                <a 
-                                                    href={item.imagen_url} 
-                                                    target="_blank" 
-                                                    rel="noreferrer"
-                                                    className="text-emerald-500 hover:text-emerald-700 p-1.5 hover:bg-emerald-50 rounded-lg transition-colors"
-                                                    title="Abrir PDF"
-                                                >
-                                                    <IconEye />
-                                                </a>
-                                            )}
                                             {/* BOTÓN EDITAR */}
                                             <button 
                                                 onClick={() => handleEditClick(item)} 
