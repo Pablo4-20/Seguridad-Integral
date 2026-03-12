@@ -384,10 +384,17 @@ class AdminController extends Controller
     public function destroyUsuario($id)
     {
         if (auth()->id() == $id) {
-            return response()->json(['error' => 'No puedes eliminar tu propia cuenta'], 400);
+            return response()->json(['error' => 'No puedes cambiar el estado de tu propia cuenta'], 400);
         }
-        User::destroy($id);
-        return response()->json(['message' => 'Usuario eliminado']);
+        
+        $user = User::findOrFail($id);
+        
+        // En lugar de eliminar, alternamos su estado (si está true pasa a false y viceversa)
+        $user->activo = !$user->activo; 
+        $user->save();
+        
+        $estado = $user->activo ? 'habilitado' : 'deshabilitado';
+        return response()->json(['message' => "Usuario $estado correctamente"]);
     }
 
     // --- GESTIÓN DE PUNTOS DEL MAPA ---

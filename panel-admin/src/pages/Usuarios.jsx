@@ -5,7 +5,9 @@ import api from '../api/axios';
 // --- ICONOS ---
 const IconAdd = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>;
 const IconEdit = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>;
-const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>;
+// Nuevos Iconos para Estado
+const IconBan = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" /></svg>;
+const IconUnlock = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>;
 const IconClose = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>;
 const IconWeb = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-blue-600"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25" /></svg>;
 const IconMobile = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-green-600"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" /></svg>;
@@ -14,25 +16,19 @@ const IconEye = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBo
 const IconEyeSlash = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>;
 
 // --- FUNCIONES DE VALIDACIÓN ---
-
 const validarCedulaEcuatoriana = (cedula) => {
     if (!cedula || cedula.length !== 10) return false;
-    
     const provincia = parseInt(cedula.substring(0, 2));
     if (provincia < 1 || provincia > 24) return false;
-    
     const digitoTres = parseInt(cedula.substring(2, 3));
     if (digitoTres >= 6) return false; 
-
     const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
     let total = 0;
-
     for (let i = 0; i < 9; i++) {
         let valor = parseInt(cedula.charAt(i)) * coeficientes[i];
         if (valor > 9) valor -= 9;
         total += valor;
     }
-
     const verificador = total % 10 === 0 ? 0 : 10 - (total % 10);
     return verificador === parseInt(cedula.charAt(9));
 };
@@ -41,10 +37,10 @@ export default function Usuarios({ tipo }) {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isToggleModalOpen, setIsToggleModalOpen] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentId, setCurrentId] = useState(null);
-    const [userToDelete, setUserToDelete] = useState(null);
+    const [userToToggle, setUserToToggle] = useState(null);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
     const [showPassword, setShowPassword] = useState(false);
 
@@ -238,21 +234,22 @@ export default function Usuarios({ tipo }) {
         }
     };
 
-    const confirmDeleteClick = (id) => {
-        setUserToDelete(id);
-        setIsDeleteModalOpen(true);
+    const confirmToggleClick = (user) => {
+        setUserToToggle(user);
+        setIsToggleModalOpen(true);
     };
 
-    const handleDeleteConfirm = async () => {
+    const handleToggleConfirm = async () => {
         try {
-            await api.delete(`${endpoint}/${userToDelete}`);
-            showToast('Usuario eliminado', 'success');
+            // El backend ahora alterna el estado en esta misma ruta
+            const response = await api.delete(`${endpoint}/${userToToggle.id}`);
+            showToast(response.data.message || 'Estado actualizado', 'success');
             cargarUsuarios();
         } catch (error) {
-            showToast('No se pudo eliminar.', 'error');
+            showToast(error.response?.data?.error || 'No se pudo cambiar el estado.', 'error');
         } finally {
-            setIsDeleteModalOpen(false);
-            setUserToDelete(null);
+            setIsToggleModalOpen(false);
+            setUserToToggle(null);
         }
     };
 
@@ -295,15 +292,16 @@ export default function Usuarios({ tipo }) {
                             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Nombre Completo</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Cédula</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Rol</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Estado</th>
                             <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {usuarios.map((user) => (
-                            <tr key={user.id} className="hover:bg-slate-50">
+                            <tr key={user.id} className={`hover:bg-slate-50 ${!user.activo ? 'opacity-60 bg-gray-50' : ''}`}>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
-                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold shadow-md mr-4 ${esAdmin ? 'bg-blue-500' : 'bg-green-500'}`}>
+                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold shadow-md mr-4 ${esAdmin ? 'bg-blue-500' : 'bg-green-500'} ${!user.activo ? 'grayscale' : ''}`}>
                                             {user.name ? user.name.charAt(0).toUpperCase() : '?'}
                                         </div>
                                         <div>
@@ -313,10 +311,23 @@ export default function Usuarios({ tipo }) {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{user.cedula || 'N/A'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap"><span className="px-3 py-1 inline-flex text-xs font-bold rounded-full bg-slate-100 text-slate-700 uppercase">{user.rol}</span></td>
+                                <td className="px-6 py-4 whitespace-nowrap"><span className="px-3 py-1 inline-flex text-xs font-bold rounded-full bg-slate-200 text-slate-700 uppercase">{user.rol}</span></td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-3 py-1 inline-flex text-xs font-bold rounded-full uppercase border ${user.activo ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                        {user.activo ? 'Activo' : 'Inactivo'}
+                                    </span>
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
-                                    <button onClick={() => handleEdit(user)} className="text-indigo-600 hover:text-indigo-900 mr-3"><IconEdit /></button>
-                                    <button onClick={() => confirmDeleteClick(user.id)} className="text-red-600 hover:text-red-900"><IconTrash /></button>
+                                    <button onClick={() => handleEdit(user)} className="text-indigo-600 hover:text-indigo-900 mr-3" title="Editar"><IconEdit /></button>
+                                    
+                                    {/* Botón de Bloqueo/Desbloqueo en vez de Basura */}
+                                    <button 
+                                        onClick={() => confirmToggleClick(user)} 
+                                        className={user.activo ? "text-red-500 hover:text-red-700" : "text-emerald-500 hover:text-emerald-700"}
+                                        title={user.activo ? "Deshabilitar" : "Habilitar"}
+                                    >
+                                        {user.activo ? <IconBan /> : <IconUnlock />}
+                                    </button>
                                 </td>
                             </tr>
                         ))}
@@ -359,14 +370,11 @@ export default function Usuarios({ tipo }) {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 mb-1">Rol</label>
-                                    
-                                    {/* CONDICIONAL: SI ES COMUNIDAD Y ESTÁ EDITANDO, MUESTRA TEXTO BLOQUEADO */}
                                     {(!esAdmin && editMode) ? (
                                         <div className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-slate-100 text-slate-500 font-bold uppercase cursor-not-allowed">
                                             {formData.rol}
                                         </div>
                                     ) : (
-                                        // SI NO, MUESTRA EL SELECTOR NORMAL
                                         <select 
                                             name="rol" 
                                             className="w-full px-4 py-3 border rounded-lg bg-white border-slate-200 text-slate-700" 
@@ -426,14 +434,26 @@ export default function Usuarios({ tipo }) {
                 </div>
             )}
             
-            {/* Modal Eliminar */}
-            {isDeleteModalOpen && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/70 p-4">
+            {/* Modal Alternar Estado (Inactivar / Activar) */}
+            {isToggleModalOpen && userToToggle && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/70 p-4 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
-                        <h3 className="text-xl font-bold mb-4">¿Eliminar usuario?</h3>
+                        <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${userToToggle.activo ? 'bg-red-100 text-red-500' : 'bg-emerald-100 text-emerald-500'}`}>
+                            {userToToggle.activo ? <IconBan /> : <IconUnlock />}
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">
+                            {userToToggle.activo ? '¿Deshabilitar cuenta?' : '¿Habilitar cuenta?'}
+                        </h3>
+                        <p className="text-sm text-slate-500 mb-6">
+                            {userToToggle.activo 
+                                ? `El usuario ${userToToggle.name} ya no podrá acceder al sistema, pero sus reportes se mantendrán intactos.`
+                                : `El usuario ${userToToggle.name} recuperará el acceso al sistema.`}
+                        </p>
                         <div className="flex flex-col gap-3">
-                            <button onClick={handleDeleteConfirm} className="w-full py-3 bg-red-600 text-white font-bold rounded-xl">Sí, Eliminar</button>
-                            <button onClick={() => setIsDeleteModalOpen(false)} className="w-full py-3 text-slate-500 font-bold">Cancelar</button>
+                            <button onClick={handleToggleConfirm} className={`w-full py-3 text-white font-bold rounded-xl shadow-md transition-colors ${userToToggle.activo ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+                                Sí, {userToToggle.activo ? 'Deshabilitar' : 'Habilitar'}
+                            </button>
+                            <button onClick={() => setIsToggleModalOpen(false)} className="w-full py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl">Cancelar</button>
                         </div>
                     </div>
                 </div>

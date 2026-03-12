@@ -31,8 +31,15 @@ public function login(Request $request)
         ], 401);
     }
 
-    // 3. (Opcional) Verificar roles específicos si es necesario
+    //(Opcional) Verificar roles específicos si es necesario
     // if ($user->rol === 'rol_bloqueado') { ... }
+// --- NUEVO: 3. Verificar si el usuario está inactivo ---
+    if ($user->activo == false) {
+        return response()->json([
+            'message' => 'Cuenta deshabilitada',
+            'errors' => ['email' => ['Tu cuenta ha sido deshabilitada por administración.']]
+        ], 403);
+    }
 
     // 4. Generar Token
     $token = $user->createToken('auth_token')->plainTextToken;

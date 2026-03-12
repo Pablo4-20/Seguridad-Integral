@@ -21,8 +21,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'cedula',
         'telefono',
         'fcm_token',
-        'foto_perfil' // (Opcional: agrégalo si vas a guardar fotos)
-    ];
+        'foto_perfil',
+        'activo'
+        ];
 
     protected $hidden = [
         'password',
@@ -33,7 +34,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
-            
+            'activo' => 'boolean',
         ];
     }
 }
