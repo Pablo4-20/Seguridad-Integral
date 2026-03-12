@@ -236,7 +236,7 @@ export default function Noticias() {
 
     // Función auxiliar para construir la URL base del backend
     const getBackendUrl = () => {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://sib.swueb.net/api';
         return apiUrl.replace('/api', ''); 
     };
 
