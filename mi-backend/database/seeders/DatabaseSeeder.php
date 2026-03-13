@@ -43,26 +43,6 @@ class DatabaseSeeder extends Seeder
         
 
         User::create([
-            'name' => 'Kelvin Holguin',
-            'email' => 'kelvin.holguin@ueb.edu.ec',
-            'password' => Hash::make('123456'), // Contraseña conocida
-            'rol' => 'comunidad',             // <--- ESTO ES LO QUE FALTABA
-            'cedula' => '1752504801',
-            'telefono' => '0995555555',
-            'email_verified_at' => now(),
-        ]);
-
-        User::create([
-            'name' => 'Katia Torres',
-            'email' => 'katia.torres@ueb.edu.ec',
-            'password' => Hash::make('123456'), // Contraseña conocida
-            'rol' => 'comunidad',             // <--- ESTO ES LO QUE FALTABA
-            'cedula' => '1752504802',
-            'telefono' => '0996666666',
-            'email_verified_at' => now(),
-        ]);
-
-        User::create([
             'name' => 'Nataly Silva',
             'email' => 'nataly.silva@ueb.edu.ec',
             'password' => Hash::make('123456'), // Contraseña conocida
