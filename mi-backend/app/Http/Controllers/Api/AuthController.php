@@ -111,8 +111,86 @@ public function login(Request $request)
             $user->markEmailAsVerified();
         }
 
-        // Retornamos un HTML simple o redireccionamos a una web de "Éxito"
-        return response("<h1>Correo verificado exitosamente.</h1><p>Ahora puede iniciar sesión en la aplicación móvil.</p>");
+        // --- NUEVO: Página HTML con redirección a la App ---
+        // IMPORTANTE: Cambia 'seguridadintegral://login' por el Deep Link (esquema) real de tu aplicación móvil.
+        $html = '
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Cuenta Verificada</title>
+            <meta http-equiv="refresh" content="5;url=seguridadintegral://login" />
+            <style>
+                body { 
+                    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; 
+                    background-color: #f8fafc; 
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: center; 
+                    height: 100vh; 
+                    margin: 0; 
+                }
+                .card { 
+                    background: white; 
+                    padding: 40px 30px; 
+                    border-radius: 16px; 
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+                    text-align: center; 
+                    max-width: 400px; 
+                    width: 90%; 
+                }
+                .icon { font-size: 60px; margin-bottom: 20px; }
+                h1 { color: #1e293b; font-size: 24px; margin-bottom: 10px; }
+                p { color: #64748b; font-size: 16px; line-height: 1.5; margin-bottom: 25px; }
+                .btn { 
+                    display: inline-block; 
+                    background-color: #2563eb; /* Azul estilo Tailwind */
+                    color: white; 
+                    text-decoration: none; 
+                    padding: 12px 24px; 
+                    border-radius: 8px; 
+                    font-weight: 600; 
+                    transition: background-color 0.3s; 
+                    width: 100%; 
+                    box-sizing: border-box; 
+                }
+                .btn:hover { background-color: #1d4ed8; }
+                .countdown-text { font-size: 14px; color: #94a3b8; margin-top: 20px; }
+                .countdown-number { font-weight: bold; color: #ef4444; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="icon">✅</div>
+                <h1>¡Verificación Exitosa!</h1>
+                <p>Tu correo ha sido verificado correctamente. Ya puedes acceder a todas las funciones del sistema.</p>
+                
+                <a href="seguridadintegral://login" class="btn">Abrir la Aplicación</a>
+                
+                <p class="countdown-text">Serás redirigido automáticamente en <span id="timer" class="countdown-number">5</span> segundos...</p>
+            </div>
+
+            <script>
+                let timeLeft = 5;
+                const timerElement = document.getElementById("timer");
+                
+                const countdown = setInterval(() => {
+                    timeLeft--;
+                    timerElement.textContent = timeLeft;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                        // Intenta forzar la redirección por JS si el meta refresh falla
+                        window.location.href = "seguridadintegral://login";
+                    }
+                }, 1000);
+            </script>
+        </body>
+        </html>
+        ';
+
+        return response($html)->header('Content-Type', 'text/html');
     }
 
     // --- 3. CERRAR SESIÓN ---
