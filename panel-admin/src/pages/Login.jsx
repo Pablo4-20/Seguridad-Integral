@@ -283,9 +283,10 @@ export default function Login() {
             )}
 
             {/* MODAL: Términos y Condiciones */}
-            {showTermsModal && (
+             {showTermsModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl relative">
+                         {/* Botón X para cerrar */}
                          <button 
                             onClick={() => setShowTermsModal(false)}
                             className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 focus:outline-none"
@@ -296,9 +297,9 @@ export default function Login() {
                         <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Términos y Condiciones</h3>
                         <div className="text-sm text-gray-600 space-y-3 mb-6 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                             <p><strong>1. Uso del Sistema:</strong> Este sistema es de uso exclusivo para el personal autorizado de la Universidad Estatal de Bolívar.</p>
-                            <p><strong>2. Confidencialidad:</strong> Toda la información manejada dentro de este panel es de carácter estrictamente confidencial. La divulgación no autorizada será penalizada.</p>
+                            <p><strong>2. Confidencialidad:</strong> Toda la información manejada dentro de este panel es de carácter estrictamente confidencial. La divulgación no autorizada será penalizada </p>
                             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <p className="font-semibold text-gray-800 mb-2">2. Restricciones:</p>
+                                <p className="font-semibold text-gray-800 mb-2">2.1 Restricciones:</p>
                                 <p className="mb-2">Queda estrictamente prohibido:</p>
                                 <div className="pl-2 space-y-2">
                                     <p><strong>a)</strong> Compartir, copiar o distribuir el código fuente sin autorización.</p>
@@ -308,6 +309,7 @@ export default function Login() {
                             </div>
                             <p><strong>3. Responsabilidad:</strong> El usuario es responsable de todas las acciones realizadas bajo sus credenciales de acceso. No comparta su contraseña con terceros.</p>
                             <p><strong>4. Monitoreo:</strong> Las actividades dentro de este sistema pueden ser monitoreadas y registradas por motivos de seguridad y auditoría integral.</p>
+                            {/* Puedes agregar más texto aquí, el contenedor tiene un scroll si el texto es muy largo */}
                         </div>
                         
                         <button 
