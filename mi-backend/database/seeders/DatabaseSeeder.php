@@ -40,15 +40,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 3. USUARIO DE COMUNIDAD (Para entrar a la App Móvil)
-        User::create([
-            'name' => 'Pablo Holguin',
-            'email' => 'pablo.holguin@ueb.edu.ec',
-            'password' => Hash::make('123456'), // Contraseña conocida
-            'rol' => 'comunidad',             // <--- ESTO ES LO QUE FALTABA
-            'cedula' => '1752504926',
-            'telefono' => '0980791149',
-            'email_verified_at' => now(),
-        ]);
+        
 
         User::create([
             'name' => 'Kelvin Holguin',
