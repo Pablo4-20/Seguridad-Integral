@@ -203,10 +203,7 @@ export default function Login() {
                         <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Equipo de Desarrollo</h3>
                         
                         <div className="text-sm text-gray-600 space-y-4 mb-6">
-                            <div>
-                                <p className="font-semibold text-gray-800">Director del Proyecto:</p>
-                                <p className="pl-2">Ing. Carlos Mendieta Ph.D.</p>
-                            </div>
+                            
 
                             <div>
                                 <p className="font-semibold text-gray-800">Desarrolladores de Software:</p>
