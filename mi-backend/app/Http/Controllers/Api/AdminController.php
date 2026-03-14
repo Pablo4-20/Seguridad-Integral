@@ -197,13 +197,13 @@ class AdminController extends Controller
                     ))
                     // Configuración vital para que Android muestre la alerta
                     ->withAndroidConfig(AndroidConfig::fromArray([
-    'priority' => 'high', // Prioridad alta para que despierte el teléfono
-    'notification' => [
-        'channel_id' => 'seguridad_ueb_channel',
-        'sound' => 'default',
-        // 'click_action' ELIMINADO: Android abrirá la actividad por defecto (MainActivity)
-    ],
-]));
+                        'priority' => 'high', // Prioridad alta para que despierte el teléfono
+                        'notification' => [
+                            'channel_id' => 'seguridad_ueb_channel',
+                            'sound' => 'default',
+                            // 'click_action' ELIMINADO: Android abrirá la actividad por defecto (MainActivity)
+                        ],
+                    ]));
 
                 $messaging->sendMulticast($message, $tokens);
                 Log::info("Notificación enviada a " . count($tokens) . " usuarios.");
@@ -381,20 +381,52 @@ class AdminController extends Controller
         return response()->json(['message' => 'Usuario actualizado correctamente']);
     }
 
+    // --- FUNCIÓN ACTUALIZADA PARA CERRAR SESIÓN EN TIEMPO REAL ---
     public function destroyUsuario($id)
     {
         if (auth()->id() == $id) {
             return response()->json(['error' => 'No puedes cambiar el estado de tu propia cuenta'], 400);
         }
         
-        $user = User::findOrFail($id);
+        $usuario = User::findOrFail($id);
         
-        // En lugar de eliminar, alternamos su estado (si está true pasa a false y viceversa)
-        $user->activo = !$user->activo; 
-        $user->save();
+        // 1. Alternamos el estado en la base de datos
+        $usuario->activo = !$usuario->activo; 
+        $usuario->save();
         
-        $estado = $user->activo ? 'habilitado' : 'deshabilitado';
-        return response()->json(['message' => "Usuario $estado correctamente"]);
+        // 2. Lógica si el usuario acaba de ser INACTIVADO
+        if (!$usuario->activo) {
+            
+            // A. Revocamos todos sus tokens de Sanctum (Cierra sesión a nivel de API)
+            $usuario->tokens()->delete();
+
+            // B. Enviamos el mensaje silencioso a Firebase para cerrar la app móvil al instante
+            if ($usuario->fcm_token) {
+                try {
+                    $messaging = app('firebase.messaging');
+                    
+                    // Usamos withData y no withNotification. Es un mensaje oculto.
+                    $message = CloudMessage::withTarget('token', $usuario->fcm_token)
+                        ->withData([
+                            'action' => 'force_logout'
+                        ]);
+                        
+                    $messaging->send($message);
+                } catch (\Exception $e) {
+                    // Registramos si hay un error en Firebase, pero la ejecución continúa
+                    Log::error('Error FCM forzando cierre: ' . $e->getMessage());
+                }
+            }
+
+            return response()->json([
+                'message' => 'Usuario inactivado y desconectado correctamente.'
+            ], 200);
+        }
+
+        // 3. Respuesta si el usuario fue HABILITADO
+        return response()->json([
+            'message' => 'Usuario habilitado correctamente.'
+        ], 200);
     }
 
     // --- GESTIÓN DE PUNTOS DEL MAPA ---
