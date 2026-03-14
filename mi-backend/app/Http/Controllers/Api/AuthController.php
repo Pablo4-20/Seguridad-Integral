@@ -13,51 +13,90 @@ class AuthController extends Controller
 {
     // --- 1. LOGIN INTELIGENTE (Soporta doble identidad) ---
 
-public function login(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-    ]);
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
-    // 1. Buscar al usuario por email
-    $user = User::where('email', $request->email)->first();
+        // 1. Buscar al usuario por email
+        $user = User::where('email', $request->email)->first();
 
-    // 2. Verificar si existe y si la contraseña es correcta
-    if (!$user || !Hash::check($request->password, $user->password)) {
+        // 2. Verificar si existe y si la contraseña es correcta
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'message' => 'Credenciales incorrectas',
+                'errors' => ['email' => ['El usuario o la contraseña no coinciden']]
+            ], 401);
+        }
+
+        // --- NUEVO: 3. Verificar si el usuario está inactivo ---
+        if ($user->activo == false) {
+            return response()->json([
+                'message' => 'Cuenta deshabilitada',
+                'errors' => ['email' => ['Tu cuenta ha sido deshabilitada por administración.']]
+            ], 403);
+        }
+
+        // 4. Generar Token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // 5. Devolver respuesta exitosa
         return response()->json([
-            'message' => 'Credenciales incorrectas',
-            'errors' => ['email' => ['El usuario o la contraseña no coinciden']]
-        ], 401);
+            'message' => 'Bienvenido ' . $user->name,
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => [
+                'id' => $user->id,
+                'nombre' => $user->name,
+                'email' => $user->email,
+                'rol' => $user->rol,
+                'foto_perfil' => $user->foto_perfil ? asset($user->foto_perfil) : null
+            ]
+        ]);
     }
 
-    //(Opcional) Verificar roles específicos si es necesario
-    // if ($user->rol === 'rol_bloqueado') { ... }
-// --- NUEVO: 3. Verificar si el usuario está inactivo ---
-    if ($user->activo == false) {
-        return response()->json([
-            'message' => 'Cuenta deshabilitada',
-            'errors' => ['email' => ['Tu cuenta ha sido deshabilitada por administración.']]
-        ], 403);
+    // --- VALIDACIONES EN TIEMPO REAL (Móvil) ---
+
+    public function checkEmail(Request $request)
+    {
+        $rolesComunidad = ['estudiante', 'docente', 'comunidad'];
+        $exists = User::where('email', $request->query('email'))
+                      ->whereIn('rol', $rolesComunidad)
+                      ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'El correo ya existe'], 422);
+        }
+        return response()->json(['message' => 'Disponible'], 200);
     }
 
-    // 4. Generar Token
-    $token = $user->createToken('auth_token')->plainTextToken;
+    public function checkCedula(Request $request)
+    {
+        $rolesComunidad = ['estudiante', 'docente', 'comunidad'];
+        $exists = User::where('cedula', $request->query('cedula'))
+                      ->whereIn('rol', $rolesComunidad)
+                      ->exists();
 
-    // 5. Devolver respuesta exitosa
-    return response()->json([
-        'message' => 'Bienvenido ' . $user->name,
-        'access_token' => $token,
-        'token_type' => 'Bearer',
-        'user' => [
-            'id' => $user->id,
-            'nombre' => $user->name,
-            'email' => $user->email,
-            'rol' => $user->rol,
-            'foto_perfil' => $user->foto_perfil ? asset($user->foto_perfil) : null
-        ]
-    ]);
-}
+        if ($exists) {
+            return response()->json(['message' => 'La cédula ya existe'], 422);
+        }
+        return response()->json(['message' => 'Disponible'], 200);
+    }
+
+    public function checkTelefono(Request $request)
+    {
+        $rolesComunidad = ['estudiante', 'docente', 'comunidad'];
+        $exists = User::where('telefono', $request->query('telefono'))
+                      ->whereIn('rol', $rolesComunidad)
+                      ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'El teléfono ya existe'], 422);
+        }
+        return response()->json(['message' => 'Disponible'], 200);
+    }
 
     // --- 2. REGISTRO (Para la App Móvil) ---
     public function register(Request $request)
@@ -249,16 +288,17 @@ public function login(Request $request)
 
         return response()->json(['message' => 'No se recibió ningún archivo'], 400);
     }
+    
     public function updateFcmToken(Request $request)
-{
-    $request->validate([
-        'fcm_token' => 'required|string',
-    ]);
+    {
+        $request->validate([
+            'fcm_token' => 'required|string',
+        ]);
 
-    $user = auth()->user();
-    $user->update(['fcm_token' => $request->fcm_token]);
+        $user = auth()->user();
+        $user->update(['fcm_token' => $request->fcm_token]);
 
-    return response()->json(['message' => 'Token FCM actualizado correctamente']);
-}
+        return response()->json(['message' => 'Token FCM actualizado correctamente']);
+    }
 
 }

@@ -70,6 +70,11 @@ Route::get('/debug-fcm', function () {
 });
 
 // --- 3. RUTAS PÚBLICAS (Sin Login) ---
+// NUEVAS RUTAS: Validación en tiempo real para el registro móvil
+Route::get('/check-email', [AuthController::class, 'checkEmail']);
+Route::get('/check-cedula', [AuthController::class, 'checkCedula']);
+Route::get('/check-telefono', [AuthController::class, 'checkTelefono']);
+
 Route::get('/mapa/puntos', [AdminController::class, 'listarPuntos']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
