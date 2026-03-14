@@ -25,7 +25,7 @@ class ComunicadoController extends Controller
         $request->validate([
             'titulo' => 'required|string|max:255',
             'categoria' => 'required|in:plan_estudiantil,protocolos_seguridad,recomendaciones,mochila_emergencia,alertas_avisos',
-            'archivo_pdf' => 'required|mimes:pdf|max:10240', // Máximo 10MB
+            'archivo_pdf' => 'required|mimes:pdf|max:50000', // Máximo 50MB
         ]);
 
         $path = $request->file('archivo_pdf')->store('comunicados', 'public');
@@ -47,7 +47,7 @@ class ComunicadoController extends Controller
         $request->validate([
             'titulo' => 'required|string|max:255',
             'categoria' => 'required|in:plan_estudiantil,protocolos_seguridad,recomendaciones,mochila_emergencia,alertas_avisos',
-            'archivo_pdf' => 'nullable|mimes:pdf|max:10240',
+            'archivo_pdf' => 'nullable|mimes:pdf|max:50000',
         ]);
 
         $comunicado->titulo = $request->titulo;
