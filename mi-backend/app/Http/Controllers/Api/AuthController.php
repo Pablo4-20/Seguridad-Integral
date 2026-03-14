@@ -157,11 +157,39 @@ class AuthController extends Controller
             ]
         );
 
-        // Construir el Deep Link que abrirá la app móvil (ajusta "seguridadintegral" si cambiaste el scheme)
+        // Construir el Deep Link que abrirá la app móvil
         $resetUrl = "seguridadintegral://reset-password/" . $token . "?email=" . urlencode($user->email);
 
-        // Enviar el correo simple
-        Mail::raw("Hola {$user->name},\n\nHas solicitado restablecer tu contraseña. Haz clic en el siguiente enlace desde tu dispositivo móvil para cambiarla:\n\n{$resetUrl}\n\nSi no solicitaste esto, ignora este correo.", function ($message) use ($user) {
+        // --- NUEVO: Construir el diseño del correo en HTML ---
+        $html = '
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Recuperar Contraseña</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; margin: 0;">
+            <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 8px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                <h2 style="color: #1A2B46; margin-bottom: 20px;">Recuperación de Contraseña</h2>
+                
+                <p style="color: #555; font-size: 16px;">Hola <strong>' . $user->name . '</strong>,</p>
+                <p style="color: #555; font-size: 16px; line-height: 1.5;">Recibimos una solicitud para restablecer tu contraseña en la aplicación <strong>Seguridad Integral</strong>.</p>
+                <p style="color: #555; font-size: 16px; margin-bottom: 30px;">Por favor, haz clic en el siguiente botón <strong>desde tu teléfono móvil</strong> para crear tu nueva contraseña:</p>
+                
+                <a href="' . $resetUrl . '" style="display: inline-block; padding: 14px 28px; background-color: #e53935; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">CAMBIAR CONTRASEÑA EN LA APP</a>
+                
+                <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <p style="color: #999; font-size: 13px; line-height: 1.4;">Si el botón no funciona, asegúrate de estar abriendo este correo desde tu dispositivo Android donde tienes instalada la aplicación.</p>
+                    <p style="color: #999; font-size: 13px;">Si no solicitaste esto, puedes ignorar este correo con seguridad.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        ';
+
+        // Enviar el correo usando formato HTML
+        Mail::html($html, function ($message) use ($user) {
             $message->to($user->email)
                     ->subject('Restablecer Contraseña - Seguridad Integral');
         });
