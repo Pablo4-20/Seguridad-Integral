@@ -70,10 +70,14 @@ Route::get('/debug-fcm', function () {
 });
 
 // --- 3. RUTAS PÚBLICAS (Sin Login) ---
-// NUEVAS RUTAS: Validación en tiempo real para el registro móvil
+// Validaciones en tiempo real para el registro móvil
 Route::get('/check-email', [AuthController::class, 'checkEmail']);
 Route::get('/check-cedula', [AuthController::class, 'checkCedula']);
 Route::get('/check-telefono', [AuthController::class, 'checkTelefono']);
+
+// RUTAS NUEVAS: Recuperación de contraseña
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::get('/mapa/puntos', [AdminController::class, 'listarPuntos']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -89,7 +93,6 @@ Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
 Route::middleware('auth:sanctum')->group(function () {
 
     // --- IMPORTANTE: Actualización de Token FCM ---
-    // Esta ruta DEBE estar aquí adentro para saber quién es el usuario (auth()->user())
     Route::post('/perfil/fcm-token', [AuthController::class, 'updateFcmToken']);
 
     // --- RUTAS DE ADMINISTRADOR ---
@@ -107,7 +110,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/noticias/{id}', [AdminController::class, 'borrarNoticia']);
 
     Route::post('/comunicados', [ComunicadoController::class, 'store']);
-    Route::post('/comunicados/{id}', [ComunicadoController::class, 'update']); // Usamos POST porque los archivos en PHP fallan a veces con PUT
+    Route::post('/comunicados/{id}', [ComunicadoController::class, 'update']); 
     Route::delete('/comunicados/{id}', [ComunicadoController::class, 'destroy']);
 
     // --- RUTAS DE USUARIO (Móvil) ---
@@ -122,19 +125,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('noticias', NoticiaController::class);
 
     // --- GESTIÓN DE USUARIOS (CRUD) ---
-    
-    // Lista de Administrativos
     Route::get('/admin/usuarios', [AdminController::class, 'index']); 
-    
-    // Lista de Comunidad
     Route::get('/admin/comunidad', [AdminController::class, 'comunidad']);
 
-    // Acciones para Administrativos
     Route::post('/admin/usuarios', [AdminController::class, 'storeUsuario']);
     Route::put('/admin/usuarios/{id}', [AdminController::class, 'updateUsuario']);
     Route::delete('/admin/usuarios/{id}', [AdminController::class, 'destroyUsuario']);
 
-    // Acciones para Comunidad
     Route::post('/admin/comunidad', [AdminController::class, 'storeUsuario']);
     Route::put('/admin/comunidad/{id}', [AdminController::class, 'updateUsuario']);
     Route::delete('/admin/comunidad/{id}', [AdminController::class, 'destroyUsuario']);
@@ -147,32 +144,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::get('/imagen-incidente/{archivo}', function ($archivo) {
     $ruta = storage_path('app/public/incidentes/' . $archivo);
-    
-    if (!file_exists($ruta)) {
-        return response()->json(['error' => 'Imagen no encontrada'], 404);
-    }
-
+    if (!file_exists($ruta)) return response()->json(['error' => 'Imagen no encontrada'], 404);
     return response()->file($ruta);
 });
 
 Route::get('/imagen-noticia/{archivo}', function ($archivo) {
     $ruta = storage_path('app/public/noticias/' . $archivo);
-    
-    if (!file_exists($ruta)) {
-        return response()->json(['error' => 'Imagen no encontrada'], 404);
-    }
-
+    if (!file_exists($ruta)) return response()->json(['error' => 'Imagen no encontrada'], 404);
     return response()->file($ruta);
 });
 
 Route::get('/documento/{archivo}', function ($archivo) {
     $ruta = storage_path('app/public/comunicados/' . $archivo);
-    
-    if (!file_exists($ruta)) {
-        return response()->json(['error' => 'Documento no encontrado'], 404);
-    }
-
-    // Le decimos al navegador que es un PDF para que permita verlo o descargarlo
+    if (!file_exists($ruta)) return response()->json(['error' => 'Documento no encontrado'], 404);
     return response()->file($ruta, [
         'Content-Type' => 'application/pdf',
         'Content-Disposition' => 'inline; filename="' . $archivo . '"'

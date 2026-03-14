@@ -5,14 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash; // Importante para verificar contraseñas manualmente
+use Illuminate\Support\Facades\Hash; 
+use Illuminate\Support\Facades\DB;   // Necesario para password_reset_tokens
+use Illuminate\Support\Facades\Mail; // Necesario para enviar correos
+use Illuminate\Support\Str;          // Necesario para generar el token random
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
-    // --- 1. LOGIN INTELIGENTE (Soporta doble identidad) ---
-
+    // --- 1. LOGIN INTELIGENTE ---
     public function login(Request $request)
     {
         $request->validate([
@@ -20,10 +22,8 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        // 1. Buscar al usuario por email
         $user = User::where('email', $request->email)->first();
 
-        // 2. Verificar si existe y si la contraseña es correcta
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'message' => 'Credenciales incorrectas',
@@ -31,7 +31,6 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // --- NUEVO: 3. Verificar si el usuario está inactivo ---
         if ($user->activo == false) {
             return response()->json([
                 'message' => 'Cuenta deshabilitada',
@@ -39,10 +38,8 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // 4. Generar Token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // 5. Devolver respuesta exitosa
         return response()->json([
             'message' => 'Bienvenido ' . $user->name,
             'access_token' => $token,
@@ -58,7 +55,6 @@ class AuthController extends Controller
     }
 
     // --- VALIDACIONES EN TIEMPO REAL (Móvil) ---
-
     public function checkEmail(Request $request)
     {
         $rolesComunidad = ['estudiante', 'docente', 'comunidad'];
@@ -109,7 +105,6 @@ class AuthController extends Controller
             'telefono' => 'nullable|string'
         ]);
 
-        // Validaciones personalizadas de duplicados (Comunidad)
         $rolesComunidad = ['estudiante', 'docente', 'comunidad'];
         
         $existeEmail = User::where('email', $request->email)->whereIn('rol', $rolesComunidad)->exists();
@@ -118,7 +113,6 @@ class AuthController extends Controller
         $existeCedula = User::where('cedula', $request->cedula)->whereIn('rol', $rolesComunidad)->exists();
         if ($existeCedula) return response()->json(['message' => 'Esta cédula ya tiene una cuenta de comunidad.'], 422);
 
-        // Crear usuario
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -128,15 +122,85 @@ class AuthController extends Controller
             'telefono' => $request->telefono
         ]);
 
-        // --- DISPARAR EVENTO DE REGISTRO (ENVÍA EL CORREO) ---
         event(new Registered($user));
 
-        // --- YA NO DEVOLVEMOS EL TOKEN ---
         return response()->json([
             'message' => 'Registro exitoso. Se ha enviado un enlace de verificación a su correo.',
             'require_verification' => true
         ]);
     }
+
+    // --- RECUPERACIÓN DE CONTRASEÑA ---
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'cedula' => 'required|string'
+        ]);
+
+        $user = User::where('cedula', $request->cedula)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'No se encontró un usuario con esa cédula.'], 404);
+        }
+
+        // Generar un token único
+        $token = Str::random(60);
+
+        // Guardar el token en la tabla de reseteo de laravel
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $user->email],
+            [
+                'email' => $user->email,
+                'token' => $token,
+                'created_at' => now()
+            ]
+        );
+
+        // Construir el Deep Link que abrirá la app móvil (ajusta "seguridadintegral" si cambiaste el scheme)
+        $resetUrl = "seguridadintegral://reset-password/" . $token . "?email=" . urlencode($user->email);
+
+        // Enviar el correo simple
+        Mail::raw("Hola {$user->name},\n\nHas solicitado restablecer tu contraseña. Haz clic en el siguiente enlace desde tu dispositivo móvil para cambiarla:\n\n{$resetUrl}\n\nSi no solicitaste esto, ignora este correo.", function ($message) use ($user) {
+            $message->to($user->email)
+                    ->subject('Restablecer Contraseña - Seguridad Integral');
+        });
+
+        return response()->json(['message' => 'Se ha enviado un enlace de recuperación al correo registrado.']);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'token' => 'required|string',
+            'password' => 'required|min:8'
+        ]);
+
+        // Verificar si el token es válido
+        $reset = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->where('token', $request->token)
+            ->first();
+
+        if (!$reset) {
+            return response()->json(['message' => 'El enlace es inválido o ha expirado.'], 400);
+        }
+
+        // Actualizar la contraseña
+        $user = User::where('email', $request->email)->first();
+        if ($user) {
+            $user->password = Hash::make($request->password);
+            $user->save();
+        }
+
+        // Eliminar el token usado
+        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+        return response()->json(['message' => 'Contraseña actualizada correctamente.']);
+    }
+
+    // --- MÉTODOS DE PERFIL Y VERIFICACIÓN ---
 
     public function verify($id, Request $request)
     {
@@ -150,8 +214,6 @@ class AuthController extends Controller
             $user->markEmailAsVerified();
         }
 
-        // --- NUEVO: Página HTML con redirección a la App ---
-        // IMPORTANTE: Cambia 'seguridadintegral://login' por el Deep Link (esquema) real de tu aplicación móvil.
         $html = '
         <!DOCTYPE html>
         <html lang="es">
@@ -161,39 +223,12 @@ class AuthController extends Controller
             <title>Cuenta Verificada</title>
             <meta http-equiv="refresh" content="5;url=seguridadintegral://login" />
             <style>
-                body { 
-                    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; 
-                    background-color: #f8fafc; 
-                    display: flex; 
-                    justify-content: center; 
-                    align-items: center; 
-                    height: 100vh; 
-                    margin: 0; 
-                }
-                .card { 
-                    background: white; 
-                    padding: 40px 30px; 
-                    border-radius: 16px; 
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
-                    text-align: center; 
-                    max-width: 400px; 
-                    width: 90%; 
-                }
+                body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+                .card { background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); text-align: center; max-width: 400px; width: 90%; }
                 .icon { font-size: 60px; margin-bottom: 20px; }
                 h1 { color: #1e293b; font-size: 24px; margin-bottom: 10px; }
                 p { color: #64748b; font-size: 16px; line-height: 1.5; margin-bottom: 25px; }
-                .btn { 
-                    display: inline-block; 
-                    background-color: #2563eb; /* Azul estilo Tailwind */
-                    color: white; 
-                    text-decoration: none; 
-                    padding: 12px 24px; 
-                    border-radius: 8px; 
-                    font-weight: 600; 
-                    transition: background-color 0.3s; 
-                    width: 100%; 
-                    box-sizing: border-box; 
-                }
+                .btn { display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; transition: background-color 0.3s; width: 100%; box-sizing: border-box; }
                 .btn:hover { background-color: #1d4ed8; }
                 .countdown-text { font-size: 14px; color: #94a3b8; margin-top: 20px; }
                 .countdown-number { font-weight: bold; color: #ef4444; }
@@ -204,23 +239,17 @@ class AuthController extends Controller
                 <div class="icon">✅</div>
                 <h1>¡Verificación Exitosa!</h1>
                 <p>Tu correo ha sido verificado correctamente. Ya puedes acceder a todas las funciones del sistema.</p>
-                
                 <a href="seguridadintegral://login" class="btn">Abrir la Aplicación</a>
-                
                 <p class="countdown-text">Serás redirigido automáticamente en <span id="timer" class="countdown-number">5</span> segundos...</p>
             </div>
-
             <script>
                 let timeLeft = 5;
                 const timerElement = document.getElementById("timer");
-                
                 const countdown = setInterval(() => {
                     timeLeft--;
                     timerElement.textContent = timeLeft;
-                    
                     if (timeLeft <= 0) {
                         clearInterval(countdown);
-                        // Intenta forzar la redirección por JS si el meta refresh falla
                         window.location.href = "seguridadintegral://login";
                     }
                 }, 1000);
@@ -232,14 +261,12 @@ class AuthController extends Controller
         return response($html)->header('Content-Type', 'text/html');
     }
 
-    // --- 3. CERRAR SESIÓN ---
     public function logout()
     {
         auth()->user()->tokens()->delete();
         return response()->json(['message' => 'Sesión cerrada exitosamente']);
     }
 
-    // --- 4. OBTENER PERFIL (Me) ---
     public function me()
     {
         $user = auth()->user();
@@ -251,33 +278,22 @@ class AuthController extends Controller
             'cedula' => $user->cedula,
             'telefono' => $user->telefono,
             'foto_perfil' => $user->foto_perfil ? asset($user->foto_perfil) : null,
-            // 'email_verified_at' => $user->email_verified_at
         ]);
     }
 
-    // --- 5. ACTUALIZAR FOTO DE PERFIL ---
     public function updatePhoto(Request $request)
     {
         $request->validate([
-            'foto' => 'required|image|max:10240', // Máximo 10MB
+            'foto' => 'required|image|max:10240', 
         ]);
 
         $user = auth()->user();
 
         if ($request->hasFile('foto')) {
-            // 1. Obtener el archivo
             $file = $request->file('foto');
-            
-            // 2. Generar un nombre único
             $filename = time() . '_' . $file->getClientOriginalName();
-            
-            // 3. Mover DIRECTAMENTE a la carpeta public/perfiles
             $file->move(public_path('perfiles'), $filename);
-            
-            // 4. Guardar la ruta relativa en la base de datos
             $user->foto_perfil = 'perfiles/' . $filename;
-            
-            // Guardar cambios
             $user->save();
 
             return response()->json([
