@@ -79,6 +79,8 @@ Route::get('/check-telefono', [AuthController::class, 'checkTelefono']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
+Route::get('/reset-password-mobile', [AuthController::class, 'redirectResetMobile']);
+
 Route::get('/mapa/puntos', [AdminController::class, 'listarPuntos']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
